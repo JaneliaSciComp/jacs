@@ -15,13 +15,13 @@ import javax.ejb.MessageDriven;
  *
  */
 
-@MessageDriven(name = "ConsolePipelineLauncherMDB", activationConfig = {
-        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
+@MessageDriven(activationConfig = {
+        //@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
 //        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/consolePipelineLauncher"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "20"),
-        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/consolePipelineLauncher"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "20")//,
+        //@ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000")//,
 //        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 20, timeout = 10000)

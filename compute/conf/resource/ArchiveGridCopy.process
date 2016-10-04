@@ -1,7 +1,7 @@
 <!-- 
 	Use to the grid to copy any number of files to or from the archive.
 -->
-<process name="Archive grid copy" processor="java:/jms/queue/gridArchiveAccess" startEvent="pending" updateProcessStatus="on_success">
+<process name="Archive grid copy" processor="queue/gridArchiveAccess" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 	   
         <input name="SOURCE_FILE_PATHS"/>
@@ -31,7 +31,7 @@
         
         <!-- Copy the files to or from archive -->
         <sequence name="Wait Async" waitForAsync="true">
-            <operation name="Copy files" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Copy files" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
                 <input name="RESULT_FILE_NODE"/>
                 <input name="SOURCE_FILE_PATHS"/>

@@ -21,7 +21,7 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="BlastWithGridMerge" startEvent="pending" processor="java:/jms/queue/blastLauncher">
+<process name="BlastWithGridMerge" startEvent="pending" processor="queue/blastLauncher">
     <sequence name="BlastLauncher">
         <operation name="Create Blast Result File Node" processor="org.janelia.it.jacs.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>
@@ -41,7 +41,7 @@
             <output name="RESULT_FILE_NODE_ID"/>
         </operation>
         <sequence name="BlastSubmitJob" waitForAsync="true" startEvent="running">
-            <operation name="Submit Job" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Submit Job" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.blast.submit.BlastSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="BLAST_QUERY_OUTPUT_FILE_MAP"/>
@@ -52,7 +52,7 @@
             </operation>
          </sequence>
         <sequence name="Merge Blast Results" waitForAsync="true" startEvent="merging">
-            <operation name="Merge Sort Results"  processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Merge Sort Results"  processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.blast.merge.GridMergeSortResultsService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="BLAST_QUERY_OUTPUT_FILE_MAP"/>
@@ -69,7 +69,7 @@
             <output name="RESULT_FILE_NODE_ID"/>
         </operation>
         <sequence name="Persist Blast Results" waitForAsync="true" startEvent="format">
-            <operation name="Persist Blast XML Results" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Persist Blast XML Results" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.blast.persist.results.finall.PersistFinalXMLResultsGridService"/>
                 <input name="BLAST_DEST_OUTPUT_DIR"/>
                 <input name="TOTAL_BLAST_HITS"/>

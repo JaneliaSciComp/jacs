@@ -82,6 +82,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     private SubjectDAO subjectDAO = new SubjectDAO(logger);
     private DispatcherDAO dispatcherDAO = new DispatcherDAO();
 
+    // @todo WildFly fix - put this back in
 //    @Resource(mappedName = MetricsLoggingConstants.QUEUE)
 //    private Queue metricsLoggingQueue;
     

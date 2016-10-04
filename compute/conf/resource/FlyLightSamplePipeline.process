@@ -2,7 +2,7 @@
       Fully process a single objective for a sample. Potentially this can include merging LSMs, stitching and blending them, 
       aligning, and running analysis algorithms such as neuron separation. 
  -->
- <process name="FlyLight Sample Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending">
+ <process name="FlyLight Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence name="Main">
 
         <input name="SAMPLE_ENTITY_ID"/>                 <!-- The GUID of the Sample to process -->
@@ -255,7 +255,7 @@
     		
                 <!-- Copy the files from archive -->
                 <sequence name="Wait Async" waitForAsync="true">
-                    <operation name="Copy LSMs" processor="java:/jms/queue/gridSubmitAndWait">
+                    <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
                         <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
                         <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
                         <input name="SOURCE_FILE_PATHS" value="$V{LSM_SOURCE_FILE_PATHS}"/>
@@ -271,7 +271,7 @@
                     
             		    <!-- Merge all the LSM pairs in parallel -->
             	        <sequence name="Merge LSM Pairs" waitForAsync="true">
-            		        <operation name="Merge LSM Pairs" processor="java:/jms/queue/gridSubmitAndWait">
+            		        <operation name="Merge LSM Pairs" processor="queue/gridSubmitAndWait">
             		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkMergeService"/>
             		    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
             					<input name="SAMPLE_AREA"/>
@@ -285,7 +285,7 @@
                 
                 <!-- Rearrange the channels on each tile so that they are in the correct output format -->
                 <sequence name="Convert to sample image" waitForAsync="true">
-                    <operation name="Convert to sample image" processor="java:/jms/queue/gridSubmitAndWait">
+                    <operation name="Convert to sample image" processor="queue/gridSubmitAndWait">
                         <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConvertToSampleImageService"/>
                         <input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
                         <input name="MERGE_ALGORITHM"/>
@@ -313,7 +313,7 @@
         	
         		    <!-- Determine tile groupings and pick the largest group for processing -->
         	        <sequence name="Determine Stitch Grouping" waitForAsync="true">
-        		        <operation name="Stitch Grouping" processor="java:/jms/queue/gridSubmitAndWait">
+        		        <operation name="Stitch Grouping" processor="queue/gridSubmitAndWait">
         		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DStitchGroupingService"/>
         		    		<input name="RESULT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
         		    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
@@ -329,7 +329,7 @@
 	            	
 	        		    <!-- Stitch the merged files into a single result -->
 	        	        <sequence name="Stitch and Blend" waitForAsync="true">
-	        		        <operation name="Stitch and Blend" processor="java:/jms/queue/gridSubmitAndWait">
+	        		        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
 	        		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DStitchAndBlendService"/>
 	        		    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
 	        		    		<input name="INPUT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
@@ -366,7 +366,7 @@
                      
             	    <!-- Generate MIP for the stitched file -->
                     <sequence name="Generate sample MIPs" waitForAsync="true">
-            	        <operation name="Generate MIPs" processor="java:/jms/queue/gridSubmitAndWait">
+            	        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
             	            <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
             				<input name="RESULT_FILE_NODE" value="$V{MIPS_RESULT_FILE_NODE}"/>
             				<input name="INPUT_FILENAMES" value="$V{STACK_FILENAMES}"/>

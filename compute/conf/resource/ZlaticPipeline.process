@@ -21,14 +21,14 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="Profile Comparison"  startEvent="pending" updateProcessStatus="on_success" processor="java:/jms/queue/profileComparisonLauncher">
+<process name="Profile Comparison"  startEvent="pending" updateProcessStatus="on_success" processor="queue/profileComparisonLauncher">
     <sequence name="profileComparisonLauncher">
         <operation name="Create Profile Comparison Result Node" processor="org.janelia.it.jacs.compute.service.profileComparison.CreateProfileComparisonResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>          
             <output name="RESULT_FILE_NODE"/>
         </operation>
         <sequence name="Submit Profile Comparison Job" waitForAsync="true">
-            <operation name="Submit Job" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Submit Job" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.profileComparison.ProfileComparisonSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>

@@ -1,4 +1,4 @@
-<process name="Sage Artifact Export" startEvent="pending" processor="java:/jms/queue/largePipelineLauncher" updateProcessStatus="on_success">
+<process name="Sage Artifact Export" startEvent="pending" processor="queue/largePipelineLauncher" updateProcessStatus="on_success">
     <sequence>
             
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">

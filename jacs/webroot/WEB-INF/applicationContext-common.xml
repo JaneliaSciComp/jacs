@@ -44,9 +44,9 @@
         <!--<property name="refreshHomeOnConnectFailure" value="true"/>-->
         <property name="jndiEnvironment">
              <props>
-                 <prop key="java.naming.factory.initial">org.jnp.interfaces.NamingContextFactory</prop>
-                 <prop key="java.naming.provider.url">jnp://${computeserver.ejb.service}</prop>
-                 <prop key="java.naming.factory.url.pkgs">org.jboss.naming:org.jnp.interfaces</prop>
+                 <prop key="java.naming.factory.initial">org.jboss.naming.remote.client.InitialContextFactory</prop>
+                 <prop key="java.naming.provider.url">remote://${computeserver.ejb.service}</prop>
+                 <prop key="java.naming.factory.url.pkgs">org.jboss.ejb.client.naming</prop>
              </props>
          </property>
         <property name="expectedType" value="org.janelia.it.jacs.compute.api.ComputeBeanRemote"/>
@@ -139,9 +139,9 @@
         <property name="jndiName" value="compute/ComputeEJB/remote"/>
         <property name="jndiEnvironment">
              <props>
-                 <prop key="java.naming.factory.initial">org.jnp.interfaces.NamingContextFactory</prop>
-                 <prop key="java.naming.provider.url">jnp://${computeserver.ejb.service}</prop>
-                 <prop key="java.naming.factory.url.pkgs">org.jboss.naming:org.jnp.interfaces</prop>
+                 <prop key="java.naming.factory.initial">org.jboss.naming.remote.client.InitialContextFactory</prop>
+                 <prop key="java.naming.provider.url">remote://${computeserver.ejb.service}</prop>
+                 <prop key="java.naming.factory.url.pkgs">org.jboss.ejb.client.naming</prop>
              </props>
          </property>
         <property name="expectedType" value="org.janelia.it.jacs.compute.api.ComputeBeanRemote"/>
@@ -150,9 +150,9 @@
         <property name="jndiName" value="compute/ComputeEJB/remote"/>
         <property name="jndiEnvironment">
             <props>
-                <prop key="java.naming.factory.initial">org.jnp.interfaces.NamingContextFactory</prop>
-                <prop key="java.naming.provider.url">jnp://${pipeline.ejb.service}</prop>
-                <prop key="java.naming.factory.url.pkgs">org.jboss.naming:org.jnp.interfaces</prop>
+                <prop key="java.naming.factory.initial">org.jboss.naming.remote.client.InitialContextFactory</prop>
+                <prop key="java.naming.provider.url">remote://${pipeline.ejb.service}</prop>
+                <prop key="java.naming.factory.url.pkgs">org.jboss.ejb.client.naming</prop>
             </props>
         </property>
         <property name="expectedType" value="org.janelia.it.jacs.compute.api.ComputeBeanRemote"/>
@@ -161,9 +161,9 @@
         <property name="jndiName" value="compute/SearchEJB/remote"/>
         <property name="jndiEnvironment">
             <props>
-                <prop key="java.naming.factory.initial">org.jnp.interfaces.NamingContextFactory</prop>
-                <prop key="java.naming.provider.url">jnp://${computeserver.ejb.service}</prop>
-                <prop key="java.naming.factory.url.pkgs">org.jboss.naming:org.jnp.interfaces</prop>
+                <prop key="java.naming.factory.initial">org.jboss.naming.remote.client.InitialContextFactory</prop>
+                <prop key="java.naming.provider.url">remote://${computeserver.ejb.service}</prop>
+                <prop key="java.naming.factory.url.pkgs">org.jboss.ejb.client.naming</prop>
             </props>
         </property>
         <property name="expectedType" value="org.janelia.it.jacs.compute.api.SearchBeanRemote"/>
@@ -172,9 +172,9 @@
         <property name="jndiName" value="compute/JobControlEJB/remote"/>
         <property name="jndiEnvironment">
             <props>
-                <prop key="java.naming.factory.initial">org.jnp.interfaces.NamingContextFactory</prop>
-                <prop key="java.naming.provider.url">jnp://${computeserver.ejb.service}</prop>
-                <prop key="java.naming.factory.url.pkgs">org.jboss.naming:org.jnp.interfaces</prop>
+                <prop key="java.naming.factory.initial">org.jboss.naming.remote.client.InitialContextFactory</prop>
+                <prop key="java.naming.provider.url">remote://${computeserver.ejb.service}</prop>
+                <prop key="java.naming.factory.url.pkgs">org.jboss.ejb.client.naming</prop>
             </props>
         </property>
         <property name="expectedType" value="org.janelia.it.jacs.compute.api.JobControlBeanRemote"/>

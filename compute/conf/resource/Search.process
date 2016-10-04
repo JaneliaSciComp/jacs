@@ -21,7 +21,7 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="Search"  startEvent="pending" processor="java:/jms/queue/searchLauncher" >
+<process name="Search"  startEvent="pending" processor="queue/searchLauncher" >
     <sequence name="searchLauncher">
         <operation name="Setup Search" processor="org.janelia.it.jacs.compute.service.search.SearchSetup" />
         <sequence name="Run Searches" startEvent="running" waitForAsync="true" updateProcessStatus="on_success">

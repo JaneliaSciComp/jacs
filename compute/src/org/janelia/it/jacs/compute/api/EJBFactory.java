@@ -18,9 +18,9 @@ import java.util.Properties;
  * @author Tareq Nabeel
  */
 public class EJBFactory {
-    private static final String PROVIDER_URL = "jnp://" + SystemConfigurationProperties.getString("computeserver.ejb.service");
-    private static final String INITIAL_CONTEXT_FACTORY = "org.jnp.interfaces.NamingContextFactory";
-    private static final String URL_PKG_PREFIXES = "org.jboss.naming:org.jnp.interfaces";
+    private static final String PROVIDER_URL = "remote://" + SystemConfigurationProperties.getString("computeserver.ejb.service");
+    private static final String INITIAL_CONTEXT_FACTORY = "org.jboss.naming.remote.client.InitialContextFactory";
+    private static final String URL_PKG_PREFIXES = "org.jboss.ejb.client.naming";
     private static Properties icProperties = new Properties();
 
     public static final String LOCAL_ANNOTATION_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("AnnotationEJB.Name") + "/local";

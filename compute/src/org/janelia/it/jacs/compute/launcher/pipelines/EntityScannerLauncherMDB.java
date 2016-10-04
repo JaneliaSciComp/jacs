@@ -18,13 +18,13 @@ import javax.ejb.MessageDriven;
  * @author murphys
  */
 
-@MessageDriven(name = "EntityScannerLauncherMDB", activationConfig = {
-        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
+@MessageDriven(activationConfig = {
+        //@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
 //        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/entityScannerLauncher"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1"),
-        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/entityScannerLauncher"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1")//,
+        //@ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000")//,
 //        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 50, timeout = 10000)

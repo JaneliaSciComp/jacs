@@ -2,7 +2,7 @@
 	Run all the routine Samples maintenance tasks for a given user. This includes cleaning out old un-annotated 
 	results, compressing any stray V3DRAW files into PBD, and generate H5J files.
 -->
-<process name="Sample Maintenance Pipeline" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Sample Maintenance Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 
 	<sequence>
 

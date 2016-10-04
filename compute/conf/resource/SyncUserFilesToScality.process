@@ -1,7 +1,7 @@
 <!-- 
 	Move a user's files to the Scality object store. Can be configured to move various types of files (e.g. LSMs, Samples) and sets of entities (e.g. data set). 
 -->
-<process name="Move User Files To Scality" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Move User Files To Scality" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
         <input name="DATA_SET_NAME"/>

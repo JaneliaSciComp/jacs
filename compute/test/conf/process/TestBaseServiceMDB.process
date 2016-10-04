@@ -38,7 +38,7 @@
         </operation>
     </sequence>
     <sequence waitForAsync="true" name="merge" startEvent="postprocess" forEach="BLAST_DEST_OUTPUT_DIR"> <!-- parallel merge -->
-        <operation name="Merge Sort Results" processor="java:/jms/queue/mergeSortBlastResults">
+        <operation name="Merge Sort Results" processor="queue/mergeSortBlastResults">
             <input name="RESULT_FILE_NODE_ID" />
             <input name="BLAST_NUMBER_OF_HITS_TO_KEEP"/>
             <input name="BLAST_DEST_OUTPUT_DIR" />
@@ -47,7 +47,7 @@
         </operation>
     </sequence>
     <sequence if="TOTAL_BLAST_HITS&lt;=50000" waitForAsync="true">
-        <operation name="Persist Blast Results" processor="java:/jms/queue/persistFinalNodeBlastResults" updateProcessStatus="on_success">
+        <operation name="Persist Blast Results" processor="queue/persistFinalNodeBlastResults" updateProcessStatus="on_success">
             <input name="RESULT_FILE_NODE_ID" />
             <input name="BLAST_MERGE_SORT_RESULTS" />
             <input name="BLAST_DEST_OUTPUT_DIR" />

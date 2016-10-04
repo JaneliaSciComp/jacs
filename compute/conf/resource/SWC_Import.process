@@ -1,7 +1,7 @@
 <!--
 	Loads SWC file contents as neurons, adds them to a new workspace, and associates the workspace with the sample given.
 -->
-<process name="SWC Import Pipeline" processor="java:/jms/queue/swcImport" startEvent="pending">
+<process name="SWC Import Pipeline" processor="queue/swcImport" startEvent="pending">
 
 	<sequence>
 

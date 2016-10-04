@@ -29,17 +29,17 @@ import org.janelia.it.jacs.model.user_data.UserToolEvent;
  * Created by fosterl on 11/4/2015.
  */
 @SuppressWarnings("unused")
-@MessageDriven(mappedName = "java:/jms/queue/MetricsLoggingSingletonMDB", activationConfig = {
+@MessageDriven(activationConfig = {
         @ActivationConfigProperty(propertyName = "destination", propertyValue = QUEUE ),
-        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
+        //@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
 //        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         // This value must remain at 1.  Single use/no concurrency.
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1")//,
         // Setting a very low value on trax-timeout.  Twofold reason:
         //  1. should NOT need a very long time for this.
         //  2. should NOT queue up this lo-pri/singleton resource.
-        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "10"),
+        //@ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "10")//,
 //        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 1, timeout = 10000)

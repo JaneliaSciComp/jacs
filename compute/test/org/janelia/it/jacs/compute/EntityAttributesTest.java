@@ -20,9 +20,9 @@ public class EntityAttributesTest {
     public void testEntityAttributesBean() {
     try {  
     		Hashtable environment = new Hashtable();
-        	environment.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
-        	environment.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
-        	environment.put(Context.PROVIDER_URL, "jnp://jacs-staging:1199"); 
+        	environment.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
+        	environment.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+        	environment.put(Context.PROVIDER_URL, "remote://jacs-staging:1199");
         	InitialContext context = new InitialContext(environment);
 
         	//System.out.println("-->> connected successfully to server");

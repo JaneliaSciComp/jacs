@@ -1,7 +1,7 @@
  <!-- 
       Post-processing of the unaligned stacks of the given sample. 
  -->
- <process name="FlyLight Post-Processing Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+ <process name="FlyLight Post-Processing Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 
         <input name="SAMPLE_AREAS"/>
@@ -57,7 +57,7 @@
             
                 <!-- Create MIPs and movies for all unaligned images -->
                 <sequence name="Create Unaligned Image Artifacts" waitForAsync="true">
-                    <operation name="Create Unaligned Image Artifacts" processor="java:/jms/queue/gridSubmitAndWait">
+                    <operation name="Create Unaligned Image Artifacts" processor="queue/gridSubmitAndWait">
                         <input name="iservice" value="$V{SERVICE_CLASS}"/>
                         <input name="RESULT_FILE_NODE"/>
                         <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>

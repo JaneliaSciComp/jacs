@@ -1,7 +1,7 @@
 <!-- 
 	Synchronize index with entities in the database. 
 -->
-<process name="Neuron Merge Process" processor="java:/jms/queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success" >
+<process name="Neuron Merge Process" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success" >
 
     <sequence name="Neuron Merge" waitForAsync="true">
     
@@ -17,7 +17,7 @@
         </operation>
         
         <sequence name="Neuron Merge Grid" waitForAsync="true">
-            <operation name="Neuron Merge" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Neuron Merge" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DNeuronMergeService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>

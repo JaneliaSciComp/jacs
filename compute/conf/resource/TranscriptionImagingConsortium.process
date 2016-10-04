@@ -21,14 +21,14 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="Transcription Imaging Consortium"  startEvent="pending" updateProcessStatus="on_success" processor="java:/jms/queue/ticLauncher">
+<process name="Transcription Imaging Consortium"  startEvent="pending" updateProcessStatus="on_success" processor="queue/ticLauncher">
     <sequence name="ticLauncher">
         <operation name="Create a Result Node" processor="org.janelia.it.jacs.compute.service.tic.TICResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>          
             <output name="RESULT_FILE_NODE"/>
         </operation>
         <sequence name="TIC Image Processing Job" waitForAsync="true" startEvent="running">
-            <operation name="Submit Job" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Submit Job" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.tic.TICSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>
@@ -41,7 +41,7 @@
             <input name="RESULT_FILE_NODE"/>
         </operation>
         <sequence name="Move results" waitForAsync="true" startEvent="running">
-            <operation name="Submit Job" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Submit Job" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.tic.GridResultNodeCopyService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>

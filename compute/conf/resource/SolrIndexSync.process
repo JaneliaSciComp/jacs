@@ -1,7 +1,7 @@
 <!-- 
 	Synchronize index with entities in the database. 
 -->
-<process name="Solr Index Synchronization" processor="java:/jms/queue/solrIndexSyncLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Solr Index Synchronization" processor="queue/solrIndexSyncLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 		<operation name="Solr Index Sync" processor="org.janelia.it.jacs.compute.service.solr.SolrIndexingService">
 		</operation>

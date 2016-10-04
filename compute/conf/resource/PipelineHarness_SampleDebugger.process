@@ -2,7 +2,7 @@
     A sample pipeline which just logs the sample being processed, for debugging purposes. Can be used in place
     of normal sample pipelines to test the outer pipeline logic.
 -->
-<process name="Sample debugger" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending">
+<process name="Sample debugger" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence>
 	
         <input name="SAMPLE_ENTITY_ID"/>

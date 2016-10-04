@@ -20,7 +20,7 @@ import java.util.Set;
  */
 public class EntityTraceUp {
     private static final Long TEST_GUID = 1851591489742700642L;
-    private static final String DEFAULT_SERVER = "jnp://jacs-staging:1199";
+    private static final String DEFAULT_SERVER = "remote://jacs-staging:1199";
     private boolean dumpValues = false;
     private String server = DEFAULT_SERVER;
 
@@ -72,8 +72,8 @@ public class EntityTraceUp {
 
     private EntityBeanRemote getEntityBeanRemote() throws NamingException {
         Hashtable<String,String> environment = new Hashtable<>();
-        environment.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
-        environment.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
+        environment.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
+        environment.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
         environment.put(Context.PROVIDER_URL, server);
         InitialContext context = new InitialContext(environment);
         return (EntityBeanRemote) context.lookup("compute/EntityEJB/remote");

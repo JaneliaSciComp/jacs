@@ -1,7 +1,7 @@
 <!-- 
 	Load in the screen pattern intensity scores.
 -->
-<process name="Screen Score Loading Pipeline" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Screen Score Loading Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 		 
 	    <!-- Import variables -->

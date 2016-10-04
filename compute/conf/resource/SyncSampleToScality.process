@@ -1,7 +1,7 @@
 <!-- 
     Asynchronously move the Sample's files to Scality via Sproxyd. 
 -->
-<process name="Synchronize Sample Files to Scality" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Synchronize Sample Files to Scality" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
     
         <input name="SAMPLE_ENTITY_ID"/>
@@ -48,7 +48,7 @@
         
         <!-- Copy the files to archive -->
         <sequence name="Wait Async" waitForAsync="true">
-            <operation name="Copy files" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Copy files" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.domain.sample.SyncSampleToScalityGridService"/>
                 <input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
                 <input name="SAMPLE_ENTITY_ID"/>

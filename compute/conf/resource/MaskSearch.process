@@ -1,7 +1,7 @@
 <!-- 
 	Synchronize index with entities in the database. 
 -->
-<process name="Mask Search Process" processor="java:/jms/queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success" >
+<process name="Mask Search Process" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success" >
 
     <sequence name="Mask Search" waitForAsync="true">
     
@@ -17,7 +17,7 @@
         </operation>
         
         <sequence name="Mask Search Grid" waitForAsync="true">
-            <operation name="Mask Search" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Mask Search" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3dMaskSearchService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="RESULT_FILE_NODE"/>
@@ -30,7 +30,7 @@
         </sequence>
         
         <sequence name="MIP Generation" waitForAsync="true">
-            <operation name="MIP Generation" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MIPGenerationService"/>
                 <input name="IGNORE_ERRORS" value="true"/>
                 <input name="RESULT_FILE_NODE"/>
@@ -41,7 +41,7 @@
         </sequence>
 
         <sequence name="MIP Conversion to PNG" waitForAsync="true">
-            <operation name="MIP Conversion to PNG" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
                 <input name="IGNORE_ERRORS" value="true"/>
                 <input name="RESULT_FILE_NODE"/>

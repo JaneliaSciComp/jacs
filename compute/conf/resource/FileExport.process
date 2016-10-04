@@ -21,7 +21,7 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="FileExport" startEvent="pending" processor="java:/jms/queue/exportLauncher">
+<process name="FileExport" startEvent="pending" processor="queue/exportLauncher">
     <sequence name="exportLauncher">
         <operation name="Setup Export" processor="org.janelia.it.jacs.compute.service.export.FileExportSetup" />
         <sequence name="Run Export" startEvent="running" waitForAsync="true" updateProcessStatus="on_success">

@@ -19,7 +19,7 @@
 
 -->
 
-<process name="Mask Sample Annotation Pipeline" processor="java:/jms/queue/maskSampleAnnotationPipelineLauncher" startEvent="pending">
+<process name="Mask Sample Annotation Pipeline" processor="queue/maskSampleAnnotationPipelineLauncher" startEvent="pending">
 
 	<sequence>
 
@@ -55,7 +55,7 @@
 	    <sequence forEach="FLY_LINE_GROUP_LIST" waitForAsync="true">
 	            <sequence async="true">
 
-	                <sequence processor="java:/jms/queue/maskSampleAnnotationPipelineLauncher">
+	                <sequence processor="queue/maskSampleAnnotationPipelineLauncher">
 
 				    <!-- Service instance for processing each Fly Line Group.
 				         This service creates result nodes for processing the Fly Line group, and attaches them to the samples.
@@ -83,7 +83,7 @@
                     <sequence if="SAMPLE_COUNT&gt;=1">
 
                     <sequence name="Compute Pattern Annotation" waitForAsync="true">
-       			        <operation name="Pattern Annotation" processor="java:/jms/queue/gridSubmitAndWait">
+       			        <operation name="Pattern Annotation" processor="queue/gridSubmitAndWait">
         			        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DMaskAnnotationService"/>
         			        <input name="RESULT_FILE_NODE"/>
     		                <input name="SAMPLE_ID_LIST"/>
@@ -98,7 +98,7 @@
  	                <sequence forEach="MIPS_CONVERSION_PATH" waitForAsync="true">
 	                    <sequence async="true">
                             <sequence name="MIP Conversion to PNG" waitForAsync="true">
-            		             <operation name="MIP Conversion to PNG" processor="java:/jms/queue/gridSubmitAndWait">
+            		             <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
            			                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
            			                 <input name="IMAGE_CONVERSION_RESULT_NODE_MAP"/>
            		    		         <input name="MIPS_CONVERSION_PATH"/>

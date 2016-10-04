@@ -1,7 +1,7 @@
 <!-- 
 	Compress all of a user's samples to a target compression level.
 -->
-<process name="Sample Compression" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Sample Compression" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
         <input name="DATA_SET_NAME"/>

@@ -1,7 +1,7 @@
 <!-- 
 	Upgrade the model of a single sample to use the most current entity structure.
 -->
-<process name="Upgrade Single Sample" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending">
+<process name="Upgrade Single Sample" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence>
 	
     	<operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">

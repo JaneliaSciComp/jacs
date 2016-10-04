@@ -41,6 +41,7 @@ import org.janelia.it.jacs.model.tasks.utility.ScalityMigrationTask;
 import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+import org.springframework.jmx.export.annotation.ManagedOperationParameter;
 
 @Singleton
 @Startup
@@ -283,7 +284,7 @@ public class SampleDataManager extends AbstractComponentMBean implements SampleD
         }
     }
     
-    public String runAllDataSetPipelines(String runMode, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force) {
+    public String runAllDataSetPipelines(@ManagedOperationParameter(name="runMode", description = "") String runMode, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force) {
         try {
             Set<String> subjectKeys = getSubjectsWithDataSets();
             log.info("Found users with data sets: "+subjectKeys);

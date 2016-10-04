@@ -29,7 +29,7 @@
         </operation>
         <operation name="Create Fasta Input"  processor="org.jcvi.vics.compute.service.blast.fastasplit.BlastMultiFastaSplitterService"/>
          <sequence waitForAsync="true">
-            <operation name="Submit Job" startEvent="running" processor="java:/jms/queue/submitBlastJob" queueToLinkTo="queue/blastLauncher">
+            <operation name="Submit Job" startEvent="running" processor="queue/submitBlastJob" queueToLinkTo="queue/blastLauncher">
                  <input name="RESULT_FILE_NODE_ID"/>
                  <input name="BLAST_FASTA_INPUT_FILE"/>
                 <output name="BLAST_NUMBER_OF_HITS_TO_KEEP"/>

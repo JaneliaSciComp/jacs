@@ -14,7 +14,7 @@ import java.util.List;
 public class ProcessDef extends SeriesDef {
 
     private static final ProcessorType DEFAULT_PROCESSOR_TYPE = ProcessorType.POJO;
-    private static final String DEFAULT_LOCAL_MDB_PROCESSOR = "java:/jms/queue/processLauncher";
+    private static final String DEFAULT_LOCAL_MDB_PROCESSOR = "queue/processLauncher";
     private static final String DEFAULT_POJO_PROCESSOR = ProcessLauncher.class.getName();
     private static final String DEFAULT_LOCAL_SLSB_PROCESSOR = "local/ProcessLauncherSLSB";
 

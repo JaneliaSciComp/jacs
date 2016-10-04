@@ -1,7 +1,7 @@
 <!-- 
 	Maintenance operations for the MongoDB schema, ensuring indexes are in place, verifying denormalizations, etc.
 -->
-<process name="MongoDB Maintenance" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending">
+<process name="MongoDB Maintenance" processor="queue/largePipelineLauncher" startEvent="pending">
 	<sequence>
 		<operation name="MongoDB Maintenance" processor="org.janelia.it.jacs.compute.service.mongodb.MongoDbMaintenanceService">
 		</operation>

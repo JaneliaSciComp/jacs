@@ -17,7 +17,7 @@
 
 -->
 
-<process name="File Tree Loader Pipeline" processor="java:/jms/queue/fileTreeLoaderPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="File Tree Loader Pipeline" processor="queue/fileTreeLoaderPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    <sequence>
 
@@ -82,7 +82,7 @@
 				        </operation>
 
                         <sequence name="PBD Generation" waitForAsync="true">
-        		            <operation name="PBD Generation" processor="java:/jms/queue/gridSubmitAndWait">
+        		            <operation name="PBD Generation" processor="queue/gridSubmitAndWait">
         				        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
                                 <input name="IGNORE_ERRORS" value="true"/>
                                 <input name="PBD_RESULT_NODE"/>
@@ -129,7 +129,7 @@
 				        </operation>
 
                         <sequence name="MIP Generation" waitForAsync="true">
-        		            <operation name="MIP Generation" processor="java:/jms/queue/gridSubmitAndWait">
+        		            <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
         				        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MIPGenerationService"/>
                                 <input name="IGNORE_ERRORS" value="true"/>
                                 <input name="MIP_RESULT_NODE"/>
@@ -143,7 +143,7 @@
         			    </sequence>
 
                         <sequence name="MIP Conversion to PNG" waitForAsync="true">
-        		            <operation name="MIP Conversion to PNG" processor="java:/jms/queue/gridSubmitAndWait">
+        		            <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
        			                <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
         				        <input name="MIP_RESULT_NODE"/>
                                 <input name="IGNORE_ERRORS" value="true"/>

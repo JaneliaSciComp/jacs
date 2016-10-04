@@ -1,4 +1,4 @@
-<process name="DITP Alignment Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="DITP Alignment Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 
         <include name="Pipeline" process="FlyLightSamplePipeline">

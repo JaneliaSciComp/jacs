@@ -201,9 +201,9 @@ public class BlastTest extends AbstractComponentMBean implements BlastTestMBean 
 
     private void submitBlastJob(String dbTagList) throws Exception {
         Properties props = new Properties();
-        props.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
-        props.put(Context.PROVIDER_URL, "jnp://localhost:1099");
-        props.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
+        props.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
+        props.put(Context.PROVIDER_URL, "remote://localhost:1099");
+        props.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
         InitialContext ic = new InitialContext(props);
         //String lookupString = "java:/"+orderEJBName;
         String lookupString = helper.getProperty(ORDER_EJB_PROP, "OrderEJB");

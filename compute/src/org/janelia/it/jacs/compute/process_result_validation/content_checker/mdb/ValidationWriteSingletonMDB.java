@@ -33,14 +33,14 @@ import java.io.PrintWriter;
  * Created by fosterl on 9/4/14.
  */
 @SuppressWarnings("unused")
-@MessageDriven(name = "ValidationWriteSingletonMDB", activationConfig = {
+@MessageDriven(activationConfig = {
         @ActivationConfigProperty(propertyName = "destination", propertyValue = NON_CONCURRENT_WRITE_QUEUE ),
-        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
+        //@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
 //        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         // This value must remain at 1.  Single use/no concurrency.
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1"),
-        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1")//,
+        //@ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000")//,
 //        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 1, timeout = 10000)

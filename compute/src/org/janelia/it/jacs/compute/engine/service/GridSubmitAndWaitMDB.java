@@ -33,16 +33,16 @@ import java.util.Map;
  * Date: Jan 15, 2009
  * This MDB will process 2 types of messages - request for submission, and response from asynchronous submitter
  */
-@MessageDriven(name = "GridSubmitAndWaitMDB", activationConfig = {
+@MessageDriven(activationConfig = {
 //        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/gridSubmitAndWait"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "200"),
-        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/gridSubmitAndWait"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "200")//,
+        //@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="5"),
-        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
+        //@ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
-        @ActivationConfigProperty(propertyName = "reconnectInterval", propertyValue = "30"),
+//        @ActivationConfigProperty(propertyName = "reconnectInterval", propertyValue = "30")//,
 //        @ActivationConfigProperty(propertyName="RedeliveryLimit", propertyValue="100"),
 //        @ActivationConfigProperty(propertyName="RedeliveryDelay", propertyValue="30"),
 //        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")

@@ -1,7 +1,7 @@
 <!-- 
 	Clean old, unannotated results from Samples.
 -->
-<process name="Sample Cleaning" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Sample Cleaning" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 		<operation name="Sample Cleaning" processor="org.janelia.it.jacs.compute.service.domain.SampleCleaningService">
 		</operation>

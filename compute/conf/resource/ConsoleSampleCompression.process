@@ -1,7 +1,7 @@
 <!-- 
 	Rerun compression service on a sample or samples.
 -->
-<process name="Sample Compression" processor="java:/jms/queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Sample Compression" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Sample Compression" waitForAsync="true">
         
         <input name="SAMPLE_ENTITY_ID"/>

@@ -25,7 +25,7 @@
     <sequence>
         <operation name="Create Task" processor="compute/CreateBlastTaskSLSB/local"/>
     </sequence>
-    <sequence processor="java:/jms/queue/blastLauncher">
+    <sequence processor="queue/blastLauncher">
         <operation name="Persit Query Node"  processor="org.jcvi.vics.compute.service.blast.persist.query.PersistQueryNodeService">
             <input name="USER_NAME" mandatory="true"/>
             <input name="FAST_TEXT" mandatory="true"/>

@@ -1,4 +1,4 @@
-<process name="Geometric Index Pipeline" processor="java:/jms/queue/entityScannerLauncher" startEvent="pending">
+<process name="Geometric Index Pipeline" processor="queue/entityScannerLauncher" startEvent="pending">
     <sequence>
         <operation name="Geometric Index" processor="org.janelia.it.jacs.compute.service.geometricSearch.GeometricIndexService">  
         </operation>

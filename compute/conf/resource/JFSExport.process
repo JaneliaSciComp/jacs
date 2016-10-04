@@ -21,9 +21,9 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="JFS Export" startEvent="pending" processor="java:/jms/queue/shortPipelineLauncher" updateProcessStatus="on_success">
+<process name="JFS Export" startEvent="pending" processor="queue/shortPipelineLauncher" updateProcessStatus="on_success">
     <sequence name="JFS Export" waitForAsync="true" startEvent="running">
-        <operation name="JFS Export" processor="java:/jms/queue/gridSubmitAndWait">
+        <operation name="JFS Export" processor="queue/gridSubmitAndWait">
             <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.JFSExportService"/>
         </operation>
      </sequence>

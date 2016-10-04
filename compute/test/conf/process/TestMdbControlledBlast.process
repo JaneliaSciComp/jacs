@@ -31,7 +31,7 @@
             <output name="BLAST_FASTA_INPUT_FILE"/>
         </operation>
         <sequence waitForAsync="true">
-            <operation name="Submit Job" startEvent="running" processor="java:/jms/queue/submitBlastJob" queueToLinkTo="java:/jms/queue/mergeSortBlastResults">
+            <operation name="Submit Job" startEvent="running" processor="queue/submitBlastJob" queueToLinkTo="java:/jms/queue/mergeSortBlastResults">
                  <input name="RESULT_FILE_NODE_ID"/>
                  <input name="BLAST_FASTA_INPUT_FILE"/>
                 <output name="BLAST_NUMBER_OF_HITS_TO_KEEP"/>

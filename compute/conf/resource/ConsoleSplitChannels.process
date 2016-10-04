@@ -1,7 +1,7 @@
 <!-- 
 	Split the channels for an image and place the results in the temporary directory for download.
 -->
-<process name="Split Channels" processor="java:/jms/queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Split Channels" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Split Channels" waitForAsync="true">
         
         <input name="FILE_PATH"/>
@@ -28,7 +28,7 @@
         </sequence>
         
         <sequence name="Splitting channels" waitForAsync="true" startEvent="running">
-            <operation name="Split Channels" processor="java:/jms/queue/gridSubmitAndWait">
+            <operation name="Split Channels" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkChannelSplitService"/>
                 <input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
                 <input name="INPUT_FILE" value="$V{FILE_PATH}"/>

@@ -18,14 +18,14 @@ import javax.ejb.MessageDriven;
  *
  * @author Tareq Nabeel
  */
-@MessageDriven(name = "BlastDBLauncherMDB", activationConfig = {
-        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
+@MessageDriven(activationConfig = {
+        //@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
 //        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/blastDBLauncher"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "5"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/blastDBLauncher"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "5")//,
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="5"),
-        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "18000"),
+        //@ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "18000")//,
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
 //        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })

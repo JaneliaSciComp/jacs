@@ -15,13 +15,13 @@ import javax.ejb.MessageDriven;
  * To change this template use File | Settings | File Templates.
  */
 
-@MessageDriven(name = "FlyLightScreenPipelineLauncherMDB", activationConfig = {
-        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
+@MessageDriven(activationConfig = {
+        //@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
 //        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/flyLightScreenPipelineLauncher"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "3"),
-        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/flyLightScreenPipelineLauncher"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "3")//,
+        //@ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000")//,
 //        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 3, timeout = 10000)

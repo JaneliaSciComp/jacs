@@ -1,4 +1,4 @@
-<process name="Simpson Lab Sensory Descending Alignment Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Simpson Lab Sensory Descending Alignment Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
     
         <include name="Pipeline" process="FlyLightPairedSamplePipeline">

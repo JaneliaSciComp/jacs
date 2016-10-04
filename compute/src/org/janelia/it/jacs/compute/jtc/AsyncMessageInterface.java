@@ -408,9 +408,9 @@ public class AsyncMessageInterface {
 
     private Context getInitialContext() throws NamingException {
         Properties env = new Properties();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
+        env.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
         env.put(Context.PROVIDER_URL, providerUrl);
-        env.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
+        env.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
         return new InitialContext(env);
     }
 

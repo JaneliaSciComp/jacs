@@ -14,13 +14,13 @@ import javax.ejb.MessageDriven;
  * Date: Mar 31, 2010
  * Time: 10:20:10 AM
  */
-@MessageDriven(name = "GenericServiceLauncherMDB", activationConfig = {
-        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
+@MessageDriven(activationConfig = {
+        //@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
 //        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/genericServiceLauncher"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "5"),
-        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/genericServiceLauncher"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "5")//,
+        //@ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000")//,
 //        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 5, timeout = 10000)

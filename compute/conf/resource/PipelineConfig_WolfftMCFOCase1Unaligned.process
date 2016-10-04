@@ -1,4 +1,4 @@
-<process name="Tanya MCFO Case 1 Unaligned Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Tanya MCFO Case 1 Unaligned Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 
         <include name="Pipeline" process="FlyLightPairedSamplePipeline">

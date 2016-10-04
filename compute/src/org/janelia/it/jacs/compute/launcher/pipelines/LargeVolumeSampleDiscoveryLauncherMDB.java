@@ -9,13 +9,13 @@ import javax.ejb.MessageDriven;
 
 // IMPORTANT: keep maxSize of StrictMaxPool in sync with maxSessions in activation config property.
 
-@MessageDriven(name = "LargeVolumeSampleDiscoveryLauncherMDB", activationConfig = {
-        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
+@MessageDriven(activationConfig = {
+        //@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
 //        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/lvsDiscovery"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1"),
-        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "72000"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/lvsDiscovery"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1")//,
+        //@ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "72000")//,
 //        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 1, timeout = 10000)

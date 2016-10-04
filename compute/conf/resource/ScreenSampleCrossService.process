@@ -1,7 +1,7 @@
 <!-- 
 	Compute the cross of two images.
 -->
-<process name="Compute Image Crosses" processor="java:/jms/queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Compute Image Crosses" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
 	    <!-- Import variables from the task -->
@@ -40,7 +40,7 @@
 	
 	    <!-- Intersect all the image pairs in parallel -->
         <sequence name="Intersect Image Pairs" waitForAsync="true">
-	        <operation name="Intersect Image Pairs" processor="java:/jms/queue/gridSubmitAndWait">
+	        <operation name="Intersect Image Pairs" processor="queue/gridSubmitAndWait">
 	            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkIntersectionService"/>
 				<input name="RESULT_FILE_NODE"/>
 				<input name="FILE_PAIRS"/>

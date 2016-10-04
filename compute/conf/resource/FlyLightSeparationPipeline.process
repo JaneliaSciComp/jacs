@@ -1,7 +1,7 @@
  <!-- 
       Run the neuron separator on a given input file for a given sample. 
  -->
- <process name="FlyLight Separation Pipeline" processor="java:/jms/queue/analysisPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+ <process name="FlyLight Separation Pipeline" processor="queue/analysisPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
 		<input name="SAMPLE_ENTITY_ID"/>
@@ -35,7 +35,7 @@
             
     	    <!-- Run neuron separation on the stitched result -->
             <sequence name="Neuron Separation" waitForAsync="true">
-    		    <operation name="Neuron Separation" processor="java:/jms/queue/gridSubmitAndWait">
+    		    <operation name="Neuron Separation" processor="queue/gridSubmitAndWait">
     		        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparationPipelineGridService"/>
     				<input name="SEPARATE_RESULT_FILE_NODE"/>
     	    		<input name="RESULT_FILE_NODE" value="$V{SEPARATE_RESULT_FILE_NODE}"/>

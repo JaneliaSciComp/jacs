@@ -145,7 +145,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
         try {
             AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
-            messageInterface.startMessageSession("java:/jms/queue/cancelTask", messageInterface.localConnectionType);
+            messageInterface.startMessageSession("queue/cancelTask", messageInterface.localConnectionType);
             Message msg = messageInterface.createObjectMessage();
             msg.setLongProperty("TASK_ID", taskId);
             messageInterface.sendMessageWithinTransaction(msg);

@@ -33,9 +33,9 @@
     <bean id="jndiTemplate" class="org.springframework.jndi.JndiTemplate">
         <property name="environment">
             <props>
-                <prop key="java.naming.factory.initial">org.jnp.interfaces.NamingContextFactory</prop>
+                <prop key="java.naming.factory.initial">org.jboss.naming.remote.client.InitialContextFactory</prop>
                 <prop key="java.naming.provider.url">${AsyncMessageInterface.ProviderURL}</prop>
-                <prop key="java.naming.factory.url.pkgs">org.jboss.naming:org.jnp.interfaces</prop>
+                <prop key="java.naming.factory.url.pkgs">org.jboss.ejb.client.naming</prop>
             </props>
         </property>
     </bean>

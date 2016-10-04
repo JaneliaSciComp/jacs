@@ -4,7 +4,7 @@
     It stores this information in a json probabliities file that is used by the console to create a search.
 -->
 
-<process name="NeuronLineageClassifier" processor="java:/jms/queue/lineageClassifierPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="NeuronLineageClassifier" processor="queue/lineageClassifierPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    <sequence>
 	        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
