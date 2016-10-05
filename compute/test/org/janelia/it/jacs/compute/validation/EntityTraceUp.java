@@ -75,6 +75,8 @@ public class EntityTraceUp {
         environment.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
         environment.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
         environment.put(Context.PROVIDER_URL, server);
+        environment.put(Context.SECURITY_PRINCIPAL, "jmsuser");
+        environment.put(Context.SECURITY_CREDENTIALS, "jmsuser");
         InitialContext context = new InitialContext(environment);
         return (EntityBeanRemote) context.lookup("compute/EntityEJB/remote");
     }

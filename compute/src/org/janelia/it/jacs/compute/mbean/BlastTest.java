@@ -204,6 +204,8 @@ public class BlastTest extends AbstractComponentMBean implements BlastTestMBean 
         props.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
         props.put(Context.PROVIDER_URL, "remote://localhost:1099");
         props.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+        props.put(Context.SECURITY_PRINCIPAL, "jmsuser");
+        props.put(Context.SECURITY_CREDENTIALS, "jmsuser");
         InitialContext ic = new InitialContext(props);
         //String lookupString = "java:/"+orderEJBName;
         String lookupString = helper.getProperty(ORDER_EJB_PROP, "OrderEJB");

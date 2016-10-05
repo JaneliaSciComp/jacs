@@ -130,6 +130,15 @@
     </orderEntry>
     <orderEntry type="library" name="Lucene" level="project" />
     <orderEntry type="library" name="Quartz" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../common/Spring/spring.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

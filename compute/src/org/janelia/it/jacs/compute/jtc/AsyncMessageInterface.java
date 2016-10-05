@@ -411,6 +411,8 @@ public class AsyncMessageInterface {
         env.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
         env.put(Context.PROVIDER_URL, providerUrl);
         env.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+        env.put(Context.SECURITY_PRINCIPAL, "jmsuser");
+        env.put(Context.SECURITY_CREDENTIALS, "jmsuser");
         return new InitialContext(env);
     }
 

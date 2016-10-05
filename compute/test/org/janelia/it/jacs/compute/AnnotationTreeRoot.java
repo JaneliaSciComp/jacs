@@ -25,6 +25,8 @@ public class AnnotationTreeRoot {
         	environment.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
         	environment.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
         	environment.put(Context.PROVIDER_URL, "remote://jacs-staging:1199");
+			environment.put(Context.SECURITY_PRINCIPAL, "jmsuser");
+			environment.put(Context.SECURITY_CREDENTIALS, "jmsuser");
         	InitialContext context = new InitialContext(environment);
         	//System.out.println("-->> connected successfully to server");
 

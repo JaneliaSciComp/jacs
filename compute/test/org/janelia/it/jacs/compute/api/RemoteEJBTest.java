@@ -22,6 +22,8 @@ public class RemoteEJBTest {
         environment.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
         environment.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
         environment.put(Context.PROVIDER_URL, "remote://rokicki-ws:1199");
+        environment.put(Context.SECURITY_PRINCIPAL, "jmsuser");
+        environment.put(Context.SECURITY_CREDENTIALS, "jmsuser");
         context = new InitialContext(environment);
     }
 }
