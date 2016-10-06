@@ -35,13 +35,16 @@
             <props>
                 <prop key="java.naming.factory.initial">org.jboss.naming.remote.client.InitialContextFactory</prop>
                 <prop key="java.naming.provider.url">${AsyncMessageInterface.ProviderURL}</prop>
-                <prop key="java.naming.factory.url.pkgs">org.jboss.ejb.client.naming</prop>
+                <prop key="java.naming.security.principal">jmsuser</prop>
+                <prop key="java.naming.security.credentials">jmsuser</prop>
+
+                <!--<prop key="java.naming.factory.url.pkgs">org.jboss.ejb.client.naming</prop>-->
             </props>
         </property>
     </bean>
 
     <bean id="remoteJobControlService" class="org.springframework.jndi.JndiObjectFactoryBean">
-        <property name="jndiName" value="compute/JobControlEJB/remote"/>
+        <property name="jndiName" value="compute/compute.jar/JobControlEJB!org.janelia.it.jacs.compute.api.JobControlBeanRemote"/>
         <property name="jndiTemplate" ref="jndiTemplate"/>
         <property name="expectedType" value="org.janelia.it.jacs.compute.api.JobControlBeanRemote"/>
     </bean>

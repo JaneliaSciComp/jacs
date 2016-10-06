@@ -9,7 +9,8 @@ import javax.ejb.EJBException;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.util.Properties;
+
+import java.util.Hashtable;
 
 /**
  * This class returns interfaces for local EJBs.  It is also used by JUnit tests to return the remote
@@ -21,30 +22,30 @@ public class EJBFactory {
     private static final String PROVIDER_URL = "http-remoting://" + SystemConfigurationProperties.getString("computeserver.ejb.service")+":8080";
     private static final String INITIAL_CONTEXT_FACTORY = "org.jboss.naming.remote.client.InitialContextFactory";
     private static final String URL_PKG_PREFIXES = "org.jboss.ejb.client.naming";
-    private static Properties icProperties = new Properties();
+//    private static Properties icProperties = new Properties();
 
     public static final String LOCAL_ANNOTATION_JNDI_NAME = "java:global/compute/compute.jar/AnnotationEJB!org.janelia.it.jacs.compute.api.AnnotationBeanLocal";
-    public static final String REMOTE_ANNOTATION_JNDI_NAME = "java:jboss/exported/compute/compute.jar/AnnotationEJB!org.janelia.it.jacs.compute.api.AnnotationBeanRemote";
+    public static final String REMOTE_ANNOTATION_JNDI_NAME = "compute/compute.jar/AnnotationEJB!org.janelia.it.jacs.compute.api.AnnotationBeanRemote";
     public static final String LOCAL_COMPUTE_JNDI_NAME = "java:global/compute/compute.jar/ComputeEJB!org.janelia.it.jacs.compute.api.ComputeBeanLocal";
-    public static final String REMOTE_COMPUTE_JNDI_NAME = "java:jboss/exported/compute/compute.jar/ComputeEJB!org.janelia.it.jacs.compute.api.ComputeBeanRemote";
+    public static final String REMOTE_COMPUTE_JNDI_NAME = "compute/compute.jar/ComputeEJB!org.janelia.it.jacs.compute.api.ComputeBeanRemote";
     public static final String LOCAL_ENTITY_JNDI_NAME = "java:global/compute/compute.jar/EntityEJB!org.janelia.it.jacs.compute.api.EntityBeanLocal";
-    public static final String REMOTE_ENTITY_JNDI_NAME = "java:jboss/exported/compute/compute.jar/EntityEJB!org.janelia.it.jacs.compute.api.EntityBeanRemote";
+    public static final String REMOTE_ENTITY_JNDI_NAME = "compute/compute.jar/EntityEJB!org.janelia.it.jacs.compute.api.EntityBeanRemote";
     public static final String LOCAL_SEARCH_JNDI_NAME = "java:global/compute/compute.jar/SearchEJB!org.janelia.it.jacs.compute.api.SearchBeanLocal";
-    public static final String REMOTE_SEARCH_JNDI_NAME = "java:jboss/exported/compute/compute.jar/SearchEJB!org.janelia.it.jacs.compute.api.SearchBeanRemote";
+    public static final String REMOTE_SEARCH_JNDI_NAME = "compute/compute.jar/SearchEJB!org.janelia.it.jacs.compute.api.SearchBeanRemote";
     public static final String LOCAL_SOLR_JNDI_NAME = "java:global/compute/compute.jar/SolrEJB!org.janelia.it.jacs.compute.api.SolrBeanLocal";
-    public static final String REMOTE_SOLR_JNDI_NAME = "java:jboss/exported/compute/compute.jar/SolrEJB!org.janelia.it.jacs.compute.api.SolrBeanRemote";
+    public static final String REMOTE_SOLR_JNDI_NAME = "compute/compute.jar/SolrEJB!org.janelia.it.jacs.compute.api.SolrBeanRemote";
     public static final String LOCAL_JOB_CONTROL_JNDI_NAME = "java:global/compute/compute.jar/JobControlEJB!org.janelia.it.jacs.compute.api.JobControlBeanLocal";
-    public static final String REMOTE_JOB_CONTROL_JNDI_NAME = "java:jboss/exported/compute/compute.jar/JobControlEJB!org.janelia.it.jacs.compute.api.JobControlBeanRemote";
+    public static final String REMOTE_JOB_CONTROL_JNDI_NAME = "compute/compute.jar/JobControlEJB!org.janelia.it.jacs.compute.api.JobControlBeanRemote";
     public static final String LOCAL_TILED_MICROSCOPE_JNDI_NAME = "java:global/compute/compute.jar/TiledMicroscopeEJB!org.janelia.it.jacs.compute.api.TiledMicroscopeBeanLocal";
-    public static final String REMOTE_TILED_MICROSCOPE_JNDI_NAME = "java:jboss/exported/compute/compute.jar/TiledMicroscopeEJB!org.janelia.it.jacs.compute.api.TiledMicroscopeBeanRemote";
+    public static final String REMOTE_TILED_MICROSCOPE_JNDI_NAME = "compute/compute.jar/TiledMicroscopeEJB!org.janelia.it.jacs.compute.api.TiledMicroscopeBeanRemote";
 
-    static {
-        icProperties.put(Context.PROVIDER_URL, PROVIDER_URL);
-        icProperties.put(Context.INITIAL_CONTEXT_FACTORY, INITIAL_CONTEXT_FACTORY);
-//        icProperties.put(Context.URL_PKG_PREFIXES, URL_PKG_PREFIXES);
-        icProperties.put(Context.SECURITY_PRINCIPAL, "jmsuser");
-        icProperties.put(Context.SECURITY_CREDENTIALS, "jmsuser");
-    }
+//    static {
+//        icProperties.put(Context.PROVIDER_URL, PROVIDER_URL);
+//        icProperties.put(Context.INITIAL_CONTEXT_FACTORY, INITIAL_CONTEXT_FACTORY);
+////        icProperties.put(Context.URL_PKG_PREFIXES, URL_PKG_PREFIXES);
+//        icProperties.put(Context.SECURITY_PRINCIPAL, "jmsuser");
+//        icProperties.put(Context.SECURITY_CREDENTIALS, "jmsuser");
+//    }
 
     /**
      * Create the InitialContext everytime to avoid concurrency issues
@@ -52,9 +53,9 @@ public class EJBFactory {
      * @return InitialContext
      * @throws javax.naming.NamingException problem with the name
      */
-    private static InitialContext createInitialContext() throws NamingException {
-        return new InitialContext(icProperties);
-    }
+//    private static InitialContext createInitialContext() throws NamingException {
+//        return new InitialContext(icProperties);
+//    }
 
     /**
      * Returns the local SLSB interface for a service
@@ -118,7 +119,7 @@ public class EJBFactory {
      */
     public static Object getLocalInterface(String lookupName) {
         try {
-            InitialContext ic = createInitialContext();
+//            InitialContext ic = createInitialContext();
 //            if (!lookupName.startsWith("compute/")) {
 //                lookupName = "compute/" + lookupName;
 //            }
@@ -126,6 +127,9 @@ public class EJBFactory {
 //                lookupName += "/local";
 //            }
 //
+            final Hashtable<String, String> jndiProps = new Hashtable<>();
+            jndiProps.put(Context.URL_PKG_PREFIXES, URL_PKG_PREFIXES);
+            InitialContext ic = new InitialContext(jndiProps);
             return ic.lookup(lookupName);
         }
         catch (NamingException e) {
@@ -141,13 +145,19 @@ public class EJBFactory {
      */
     public static Object getRemoteInterface(String lookupName) {
         try {
-            InitialContext ic = createInitialContext();
+//            InitialContext ic = createInitialContext();
 //            if (!lookupName.startsWith("compute/")) {
 //                lookupName = "compute/" + lookupName;
 //            }
 //            if (!lookupName.endsWith("/remote")) {
 //                lookupName += "/remote";
 //            }
+            final Hashtable<String, String> jndiProps = new Hashtable<>();
+            jndiProps.put(Context.PROVIDER_URL, PROVIDER_URL);
+            jndiProps.put(Context.INITIAL_CONTEXT_FACTORY, INITIAL_CONTEXT_FACTORY);
+            jndiProps.put(Context.SECURITY_PRINCIPAL, "jmsuser");
+            jndiProps.put(Context.SECURITY_CREDENTIALS, "jmsuser");
+            InitialContext ic = new InitialContext(jndiProps);
             return ic.lookup(lookupName);
         }
         catch (NamingException e) {
@@ -156,13 +166,7 @@ public class EJBFactory {
     }
 
     public static Object lookup(String lookupName) {
-        try {
-            InitialContext ic = createInitialContext(); 
-            return ic.lookup(lookupName);
-        }
-        catch (NamingException e) {
-            throw new EJBException(e);
-        }
+        return getLocalInterface(lookupName);
     }
     
     /**
