@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.persistence.EntityManager;
+import javax.persistence.Persistence;
 import javax.rmi.PortableRemoteObject;
 import javax.sql.DataSource;
 import java.sql.*;
@@ -154,7 +156,9 @@ public class DispatcherDAO {
     private SessionFactory getSessionFactory() {
         try {
             if (sessionFactory==null) {
-                sessionFactory = (SessionFactory) createInitialContext().lookup("java:/hibernate/ComputeSessionFactory");
+                EntityManager em = Persistence.createEntityManagerFactory("Workstation_pu").createEntityManager();
+                Session session = (Session)em.getDelegate();
+                sessionFactory = session.getSessionFactory();
             }
             return sessionFactory;
         } catch (Exception e) {

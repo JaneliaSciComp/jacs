@@ -10,10 +10,8 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.tools.JFSExportResultNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-import scala.collection.mutable.StringBuilder;
 
 import java.io.*;
-import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Set;
 

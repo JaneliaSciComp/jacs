@@ -6,7 +6,8 @@ import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.naming.InitialContext;
+import javax.persistence.EntityManager;
+import javax.persistence.Persistence;
 
 /**
  * Created by goinac on 9/15/15.
@@ -19,9 +20,9 @@ public class HibernateSessionUtils {
     private static SessionFactory getSessionFactory() {
         try {
             if (sessionFactory == null) {
-                InitialContext namingContext = new InitialContext();
-
-                sessionFactory = (SessionFactory) namingContext.lookup("java:/hibernate/ComputeSessionFactory");
+                EntityManager em = Persistence.createEntityManagerFactory("Workstation_pu").createEntityManager();
+                Session session = (Session)em.getDelegate();
+                sessionFactory = session.getSessionFactory();
             }
             return sessionFactory;
         } catch (Exception e) {

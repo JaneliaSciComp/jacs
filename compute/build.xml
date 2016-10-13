@@ -79,7 +79,8 @@
 		    <fileset file="${common.dir}/Logging/slf4j-api-1.7.5.jar"/>
 		    <fileset file="${common.dir}/Logging/slf4j-log4j12-1.7.5.jar"/>
 			<fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
-			<fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/Directory" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/jama-1.0.1" includes="**/*.jar"/>
@@ -95,6 +96,7 @@
             <fileset dir="${common.dir}/Jersey-2.19" includes="**/*.jar"/>
             <fileset file="${common.dir}/GWT/gwt-servlet.jar"/>
             <fileset file="${common.dir}/Spring/jxl.jar"/>
+            <fileset file="${common.dir}/Spring/spring.jar"/>
             <fileset file="${common.dir}/Wildfly-10/jboss-client.jar"/>
             <fileset dir="${basedir}/../shared/lib" includes="**/jai*.jar"/>
         </path>
@@ -120,6 +122,8 @@
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
                 <attribute name="Class-Path" value="${manifest.classpath}"/>
             </manifest>
+            <metainf dir="${condesc.dir}" includes="persistence.xml"/>
+            <metainf dir="${condesc.dir}" includes="beans.xml"/>
         </jar>
 
 	</target>
@@ -273,7 +277,7 @@
             <metainf dir="${condesc.dir}">
                 <!--<include name="jboss-service.xml"/>-->
                 <!--<include name="*-xmbean.xml"/>-->
-                <!--<include name="beans.xml"/>-->
+                <include name="beans.xml"/>
             </metainf>
         </jar>
 
@@ -324,9 +328,9 @@
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
             <metainf dir="${condesc.dir}" includes="jboss-app.xml"/>
-            <!--<metainf dir="${condesc.dir}" includes="persistence.xml"/>-->
+            <metainf dir="${condesc.dir}" includes="persistence.xml"/>
             <!--<metainf dir="${condesc.dir}" includes="c3p0-service.xml"/>-->
-            <!--<metainf dir="${condesc.dir}" includes="beans.xml"/>-->
+            <metainf dir="${condesc.dir}" includes="beans.xml"/>
         </ear>
 
     </target>

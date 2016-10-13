@@ -8,11 +8,9 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import javax.annotation.Resource;
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
-import javax.ejb.MessageDrivenContext;
+import javax.ejb.Schedule;
+
 import java.util.List;
 
 //@MessageDriven(
@@ -25,13 +23,11 @@ import java.util.List;
 public class DispatchComputationMDB implements Job {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(DispatchComputationMDB.class);
 
-    @Inject
-    private MessageDrivenContext mdctx;
-
     @Resource(mappedName = DispatchSettingsMBean.DISPATCHER_SETTINGS_JNDI_NAME)
     private DispatchSettingsMBean dispatchSettings;
 
     @Override
+    @Schedule(second="0", minute="*/2", hour="*")
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         int prefetchSize = dispatchSettings.getPrefetchSize();
         String processingNodeId = dispatchSettings.getCurrentProcessingId();
@@ -43,8 +39,8 @@ public class DispatchComputationMDB implements Job {
         LOG.debug("Look for queued jobs.");
         int maxRetries = dispatchSettings.getMaxRetries();
         boolean fetchUnassignedJobsFlag = dispatchSettings.isFetchUnassignedJobs();
-        ComputeBeanLocal computeBean = (ComputeBeanLocal) mdctx.lookup(EJBFactory.LOCAL_COMPUTE_JNDI_NAME);
-        JobControlBeanLocal jobBean = (JobControlBeanLocal) mdctx.lookup(EJBFactory.LOCAL_JOB_CONTROL_JNDI_NAME);
+        ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
+        JobControlBeanLocal jobBean = EJBFactory.getLocalJobControlBean();
         if (computeBean!=null && jobBean!=null) {
             List<DispatcherJob> pendingJobs = jobBean.nextPendingJobs(processingNodeId, fetchUnassignedJobsFlag, maxRetries, prefetchSize);
             for (DispatcherJob job : pendingJobs) {

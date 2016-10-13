@@ -10,9 +10,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.ejb.Stateless;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.Initialized;
+import javax.inject.Inject;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.persistence.EntityManager;
+import javax.persistence.Persistence;
 import javax.rmi.PortableRemoteObject;
 import javax.sql.DataSource;
 
@@ -52,7 +58,7 @@ public class ComputeBaseDAO {
     private final String jdbcUrl = SystemConfigurationProperties.getString("batch.jdbc.url", null);
     private final String jdbcUser = SystemConfigurationProperties.getString("batch.jdbc.username", null);
     private final String jdbcPw = SystemConfigurationProperties.getString("batch.jdbc.password", null);
-    
+
     protected final Logger log;
     protected SessionFactory sessionFactory;
     protected Session externalSession;
@@ -64,7 +70,7 @@ public class ComputeBaseDAO {
 
     public Connection getJdbcConnection() throws DaoException {
         try {
-            Connection connection = null;
+            Connection connection;
             if (!StringUtils.isEmpty(jndiPath)) {
                 if (log.isTraceEnabled()) {
                     log.trace("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
@@ -91,7 +97,9 @@ public class ComputeBaseDAO {
     private SessionFactory getSessionFactory() {
         try {
             if (sessionFactory==null) {
-                sessionFactory = (SessionFactory) createInitialContext().lookup("java:/hibernate/ComputeSessionFactory");
+                EntityManager em = Persistence.createEntityManagerFactory("Workstation_pu").createEntityManager();
+                Session session = (Session)em.getDelegate();
+                sessionFactory = session.getSessionFactory();
             }
             return sessionFactory;
         }
@@ -122,7 +130,7 @@ public class ComputeBaseDAO {
         
         try {
             Session session = getCurrentSession();
-            Task task = (Task) session.load(Task.class, taskId, LockMode.READ);
+            Task task = session.load(Task.class, taskId, LockMode.READ);
             if (task.isDone() && !Event.ERROR_EVENT.equals(status)) {
                 log.warn("Cannot update task "+task.getObjectId()+" to status \"" + status + "\" as it is already in DONE status.");
                 return;
@@ -157,7 +165,7 @@ public class ComputeBaseDAO {
         
         try {
             Session session = getCurrentSession();
-            Task task = (Task) session.load(Task.class, taskId, LockMode.READ);
+            Task task = session.load(Task.class, taskId, LockMode.READ);
             if (log.isDebugEnabled()) {
                 log.debug("Retrieved task=" + task.getObjectId().toString() + " from the db.");
             }
@@ -176,7 +184,7 @@ public class ComputeBaseDAO {
         if (log.isTraceEnabled()) {
             log.trace("getTaskById(taskId="+taskId+")");    
         }
-        return (Task) getCurrentSession().get(Task.class, taskId);
+        return getCurrentSession().get(Task.class, taskId);
     }
 
     public List<Task> getMostRecentTasksWithName(String owner, String taskName) {
@@ -349,7 +357,7 @@ public class ComputeBaseDAO {
             log.trace("getNodeById(nodeId="+nodeId+")");    
         }
         
-        return (Node) getCurrentSession().get(Node.class, nodeId);
+        return getCurrentSession().get(Node.class, nodeId);
     }
 
     public FileNode getFileNodeByPathOverride(String pathOverride) {

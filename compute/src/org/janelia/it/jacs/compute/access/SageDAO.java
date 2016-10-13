@@ -16,6 +16,8 @@ import java.util.Map;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.persistence.EntityManager;
+import javax.persistence.Persistence;
 import javax.rmi.PortableRemoteObject;
 import javax.sql.DataSource;
 
@@ -94,7 +96,9 @@ public class SageDAO {
     private SessionFactory getSessionFactory() {
         try {
             if (sessionFactory==null) {
-                sessionFactory = (SessionFactory) new InitialContext().lookup("java:/hibernate/SageSessionFactory");
+                EntityManager em = Persistence.createEntityManagerFactory("Sage_pu").createEntityManager();
+                Session session = (Session)em.getDelegate();
+                sessionFactory = session.getSessionFactory();
             }
             return sessionFactory;
         }
