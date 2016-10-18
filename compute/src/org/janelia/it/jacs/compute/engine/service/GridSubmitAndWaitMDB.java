@@ -120,7 +120,7 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
             if (!gpr.isCompleted()) {
                 //Task task = (Task)queueMessage.getObjectMap().get("TASK");
                 //Task task = EJBFactory.getRemoteComputeBean().getTaskById(gpr.getTaskId());
-                ComputeDAO computeDAO = new ComputeDAO(logger);
+                ComputeDAO computeDAO = new ComputeDAO();
                 Task task = computeDAO.getTaskById(gpr.getTaskId());
 
                 // Throw a ValidService Exception in case of a cancelled event

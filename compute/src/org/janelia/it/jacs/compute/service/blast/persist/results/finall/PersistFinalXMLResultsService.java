@@ -171,7 +171,7 @@ public class PersistFinalXMLResultsService implements IService {
             }
 
             this.resultFileNode.setBlastHitCount(totalBlastHits);
-            new ComputeDAO(logger).genericSave(resultFileNode);
+            new ComputeDAO().genericSave(resultFileNode);
         }
         finally {
             if (null != totalBlastHitsFile) {

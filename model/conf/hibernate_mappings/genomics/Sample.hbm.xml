@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.genomics"
                    default-access="property"
@@ -46,7 +46,7 @@
         <array name="comments" table="bio_sample_comment" inverse="false" >
              <key column="sample_id" foreign-key="bio_sample_comment_fk_sample"/>
              <index column="comment_no"/>
-             <element type="string" column="comment_text"/>
+             <element type="java.lang.String" column="comment_text"/>
         </array>
         <!--<set name="bioMaterials" table="bio_material_sample"  inverse="true" lazy="false">-->
             <!--<key column="sample_id"/>-->

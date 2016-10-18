@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hibernate-mapping PUBLIC
         "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.janelia.it.jacs.model.user_data">
     <class name="org.janelia.it.jacs.model.user_data.UserToolEvent" table="tool_activity" lazy="false">
 
@@ -11,13 +11,13 @@
 
         <property name="sessionId" column="session_id" type="java.lang.Long"/>
 
-        <property name="userLogin" not-null="true" column="user_login" type="string"/>
+        <property name="userLogin" not-null="true" column="user_login" type="java.lang.String"/>
 
-        <property name="toolName" not-null="true" column="tool_name" type="string"/>
+        <property name="toolName" not-null="true" column="tool_name" type="java.lang.String"/>
 
-        <property name="category" column="category" type="string"/>
+        <property name="category" column="category" type="java.lang.String"/>
 
-        <property name="action" column="action" type="string"/>
+        <property name="action" column="action" type="java.lang.String"/>
 
         <property name="timestamp" not-null="true" column="event_time" type="timestamp" />
 

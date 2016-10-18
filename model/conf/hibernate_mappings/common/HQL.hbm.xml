@@ -25,22 +25,22 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.genomics">
 
     <resultset name="searchJobInfoMapping">
     <return-scalar column="taskId" type="long"/>
-    <return-scalar column="jobName" type="string"/>
-    <return-scalar column="query" type="string"/>
-    <return-scalar column="searchTopic" type="string"/>
+    <return-scalar column="jobName" type="java.lang.String"/>
+    <return-scalar column="query" type="java.lang.String"/>
+    <return-scalar column="searchTopic" type="java.lang.String"/>
     <return alias="first_event" class="org.janelia.it.jacs.model.tasks.Event"/>
     <return alias="last_event" class="org.janelia.it.jacs.model.tasks.Event"/>
 </resultset>
 
 <resultset name="taskParameterPvoStringMapping">
     <return-scalar column="task_id" type="long"/>
-    <return-scalar column="parameters" type="string"/>
+    <return-scalar column="parameters" type="java.lang.String"/>
 </resultset>
 
     <!--<query name="findBioSequenceByAccession"><![CDATA[-->
@@ -281,7 +281,7 @@
         from Task task
         where task.objectId > :startId and task.objectId < :endId
         and (task.taskDeleted is null or task.taskDeleted = false)
-        order by task.objectId desc task.parentTaskId desc
+        order by task.objectId desc
     ]]></query>
 
     <query name="findTaskWithEvents"><![CDATA[

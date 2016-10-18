@@ -38,7 +38,7 @@ public class ProcessDataHelper {
         if (resultFileNode == null) {
             Long resultNodeId = (Long) processData.getMandatoryItem(ProcessDataConstants.RESULT_FILE_NODE_ID);
             try {
-                resultFileNode = (FileNode) new ComputeDAO(getLoggerForTask(processData, ProcessDataHelper.class)).genericLoad(FileNode.class, resultNodeId);
+                resultFileNode = (FileNode) new ComputeDAO().genericLoad(FileNode.class, resultNodeId);
                 processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultFileNode);
             }
             catch (Exception e) {
@@ -64,7 +64,7 @@ public class ProcessDataHelper {
             taskId = task.getObjectId();
         }
         try {
-            task = new ComputeDAO(getLoggerForTask(processData, ProcessDataHelper.class)).getTaskWithMessagesAndParameters(taskId);
+            task = new ComputeDAO().getTaskWithMessagesAndParameters(taskId);
             processData.putItem(IProcessData.TASK, task);
         }
         catch (Exception e) {
@@ -95,7 +95,7 @@ public class ProcessDataHelper {
         }
         // else return the session node
         logger.debug("task from getRootTask has id="+task.getObjectId());
-        Node tmpSessionNode = new ComputeDAO(logger).getResultNodeByTaskId(task.getObjectId());
+        Node tmpSessionNode = new ComputeDAO().getResultNodeByTaskId(task.getObjectId());
         if (null == tmpSessionNode/* || !(tmpSessionNode instanceof SessionFileNode)*/) {
             logger.debug("getRootFileNode() returning null because tmpSessionNode is null");
             return null;
@@ -124,7 +124,7 @@ public class ProcessDataHelper {
     private static Task getRootTask(Task tmpTask, Logger logger) {
         Task tmpRootTask;
         if (null != tmpTask.getParentTaskId()) {
-            tmpRootTask = getRootTask(new ComputeDAO(logger).getTaskById(tmpTask.getParentTaskId()), logger);
+            tmpRootTask = getRootTask(new ComputeDAO().getTaskById(tmpTask.getParentTaskId()), logger);
         }
         else {
             tmpRootTask = tmpTask;

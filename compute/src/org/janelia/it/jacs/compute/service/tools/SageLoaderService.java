@@ -139,7 +139,7 @@ public class SageLoaderService extends SubmitDrmaaJobService {
         if (sageLoaderTask == null) {
             sageLoaderTask = (SageLoaderTask) task;
         }
-        if (computeDAO == null) {computeDAO = new ComputeDAO(logger);}
+        if (computeDAO == null) {computeDAO = new ComputeDAO();}
         resultFileNode = createResultFileNode();
         // super.init() must be called after the resultFileNode is set or it will throw an Exception
         super.init(processData);

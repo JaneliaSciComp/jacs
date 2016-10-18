@@ -74,7 +74,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 
     public AnnotationDAO(Logger logger) {
-        super(logger);
+        super();
     }
 
     /******************************************************************************************************************/

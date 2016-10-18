@@ -133,14 +133,14 @@ public class BaseServiceMDB implements MessageListener {
         //EJBFactory.getLocalComputeBean().recordProcessSuccess(queueMessage.getProcessDef(), queueMessage.getProcessId());
         if (operationDef.updateProcessStatusOnSuccess()) {
             copyDataToFinalDestination(queueMessage.getProcessId());
-            new ComputeDAO(logger).recordProcessSuccess(queueMessage.getProcessDefName(), queueMessage.getProcessId());
+            new ComputeDAO().recordProcessSuccess(queueMessage.getProcessDefName(), queueMessage.getProcessId());
         }
     }
 
     // todo This should be a service added onto the running process not hardwired into the core.
     private void copyDataToFinalDestination(Long processId) throws MissingDataException,
             ServiceException {
-        ComputeDAO computeDAO = new ComputeDAO(logger);
+        ComputeDAO computeDAO = new ComputeDAO();
         // Grab the task
         Task task = computeDAO.getTaskById(processId);
 

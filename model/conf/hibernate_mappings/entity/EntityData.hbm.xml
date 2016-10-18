@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.janelia.it.jacs.model.entity">
     <class name="EntityData" table="entityData" >
         <id name="id" column="id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-        <property name="entityAttrName" type="string" not-null="true">
+        <property name="entityAttrName" type="java.lang.String" not-null="true">
             <column name="entity_att" length="60" />
         </property>
         <many-to-one name="parentEntity" class="Entity" cascade="none" fetch="select" lazy="proxy">
@@ -15,10 +15,10 @@
         <many-to-one name="childEntity" class="Entity" cascade="none" fetch="select" lazy="proxy">
             <column name="child_entity_id" length="60" />
         </many-to-one>
-        <property name="ownerKey" type="string">
+        <property name="ownerKey" type="java.lang.String">
             <column name="owner_key" length="64" />
         </property>
-        <property name="value" type="string">
+        <property name="value" type="java.lang.String">
             <column name="value" />
         </property>
         <property name="creationDate" type="timestamp">

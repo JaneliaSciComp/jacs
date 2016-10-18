@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.genomics"
                    default-access="property"
@@ -36,12 +36,12 @@
 
     <class name="SequenceType" table="sequence_type" mutable="false">
 
-        <id name="code" type="int" access="property"/>
-        <property name="name" type="string" not-null="true" column="name"/>
-        <property name="description" type="string" not-null="true" column="description"/>
-        <property name="elements" type="string" not-null="true" column="elements"/>
-        <property name="complements" type="string" not-null="true" column="complements"/>
-        <property name="residueType" type="string" not-null="true" column="residue_type"/> 
+        <id name="code" type="java.lang.Integer" access="property"/>
+        <property name="name" type="java.lang.String" not-null="true" column="name"/>
+        <property name="description" type="java.lang.String" not-null="true" column="description"/>
+        <property name="elements" type="java.lang.String" not-null="true" column="elements"/>
+        <property name="complements" type="java.lang.String" not-null="true" column="complements"/>
+        <property name="residueType" type="java.lang.String" not-null="true" column="residue_type"/>
     </class>
 
 </hibernate-mapping>

@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.tasks.mip"
                    default-access="property"
@@ -34,5 +34,5 @@
                    default-cascade="none" >
         <subclass name="org.janelia.it.jacs.model.tasks.mip.MIPGenerationTask"
                   extends="org.janelia.it.jacs.model.tasks.Task"
-                  discriminator-value="mipGeneration" abstract="false" />
+                  discriminator-value="mipGenerationTask" abstract="false" />
 </hibernate-mapping>

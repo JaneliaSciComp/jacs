@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.search"
                    default-access="property"
@@ -38,11 +38,11 @@
                <key-many-to-one name="searchResultNode" 
                                 class="org.janelia.it.jacs.model.user_data.Node"
                                 column="node_id"/>
-               <key-property name="accession" type="string" column="accession"/>
+               <key-property name="accession" type="java.lang.String" column="accession"/>
                <key-property name="documentId" type="java.lang.Long" column="docid"/>
            </composite-id>
-           <property name="documentType" type="string" column="doctype" />
-           <property name="documentName" type="string" column="docname" />
-           <property name="headline" type="string" column="headline" />
+           <property name="documentType" type="java.lang.String" column="doctype" />
+           <property name="documentName" type="java.lang.String" column="docname" />
+           <property name="headline" type="java.lang.String" column="headline" />
        </class>
 </hibernate-mapping>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.janelia.it.jacs.model.user_data">
     <class name="org.janelia.it.jacs.model.user_data.Subject" table="subject" lazy="true">
 
@@ -9,17 +9,17 @@
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
 	
-		<discriminator column="discriminator" type="string"/> 
+		<discriminator column="discriminator" type="java.lang.String"/>
 
         <property name="key" unique="true" not-null="true"
-            column="subject_key" type="string"/>
+            column="subject_key" type="java.lang.String"/>
             
         <property name="name" unique="true" not-null="true"
-            column="name" type="string"/>
+            column="name" type="java.lang.String"/>
 
-        <property name="fullName" type="string"/>
+        <property name="fullName" type="java.lang.String"/>
 	
-        <property name="email" type="string"/>
+        <property name="email" type="java.lang.String"/>
 
         <set name="nodes" cascade="all" inverse="true" lazy="true">
             <key foreign-key="node_fk_user">
@@ -39,11 +39,11 @@
             name="preferenceMap" table="subject_preference_map" 
             lazy="true" inverse="false" cascade="all" sort="unsorted">
             <key column="user_id"/>
-            <index column="category_and_name" type="string"/>
+            <index column="category_and_name" type="java.lang.String"/>
             <composite-element class="org.janelia.it.jacs.model.user_data.prefs.SubjectPreference">
-                <property name="name" type="string"/>
-                <property name="category" type="string"/>
-                <property name="value" type="string"/>
+                <property name="name" type="java.lang.String"/>
+                <property name="category" type="java.lang.String"/>
+                <property name="value" type="java.lang.String"/>
             </composite-element>
         </map>
         

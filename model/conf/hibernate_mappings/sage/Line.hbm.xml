@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <!-- Generated Jan 14, 2014 11:00:59 AM by Hibernate Tools 3.4.0.CR1 -->
 <hibernate-mapping>
     <class name="org.janelia.it.jacs.model.sage.Line" table="line" catalog="sage">
@@ -11,7 +11,7 @@
         <many-to-one name="lab" class="org.janelia.it.jacs.model.sage.CvTerm" fetch="select">
             <column name="lab_id" not-null="true" />
         </many-to-one>
-        <property name="name" type="string">
+        <property name="name" type="java.lang.String">
             <column name="name" not-null="true" />
         </property>
         <property name="geneId" type="java.lang.Integer">
@@ -20,7 +20,7 @@
         <property name="organismId" type="java.lang.Integer">
             <column name="organism_id" />
         </property>
-        <property name="genotype" type="string">
+        <property name="genotype" type="java.lang.String">
             <column name="genotype" />
         </property>
         <property name="createDate" type="timestamp">

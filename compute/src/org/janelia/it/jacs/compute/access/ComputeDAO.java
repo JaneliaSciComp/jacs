@@ -14,7 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import javax.ejb.Stateless;
+
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
@@ -32,7 +33,6 @@ import org.janelia.it.jacs.model.user_data.blast.BlastDatasetNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
-import org.janelia.it.jacs.model.vo.ParameterException;
 
 /**
  * This class encapsulates all DB access operations.  It wraps RuntimeExceptions with checked DaoException
@@ -41,20 +41,15 @@ import org.janelia.it.jacs.model.vo.ParameterException;
  *
  * @author Sean Murphy
  */
-
+@Stateless
 public class ComputeDAO extends ComputeBaseDAO {
-    private static int MAX_MESSAGE_SIZE = 10000;
-
-    public ComputeDAO(Logger log) {
-        super(log);
-    }
 
     public BlastDatabaseFileNode getBlastDatabaseFileNodeById(Long fileNodeId) {
         if (log.isTraceEnabled()) {
             log.trace("getBlastDatabaseFileNodeById(fileNodeId="+fileNodeId+")");    
         }
         
-        return (BlastDatabaseFileNode) getCurrentSession().get(BlastDatabaseFileNode.class, fileNodeId);
+        return getCurrentSession().get(BlastDatabaseFileNode.class, fileNodeId);
     }
 
     /**
@@ -74,7 +69,7 @@ public class ComputeDAO extends ComputeBaseDAO {
         Session session = sessionFactory.getCurrentSession();
         BlastDatasetNode blastDatasetNode = null;
         try {
-            Node node = (Node) session.get(Node.class, nodeId);
+            Node node = session.get(Node.class, nodeId);
             if (node instanceof BlastDatasetNode) {
                 blastDatasetNode = (BlastDatasetNode) node;
                 if (fetchFileNodes) {
@@ -196,7 +191,7 @@ public class ComputeDAO extends ComputeBaseDAO {
         }
         
         try {
-            StringBuffer hql = new StringBuffer("select clazz from " + className + " clazz");
+            StringBuilder hql = new StringBuilder("select clazz from " + className + " clazz");
             if (null != username) {
                 hql.append("  where clazz.owner='").append(username).append("'");
             }
@@ -237,7 +232,7 @@ public class ComputeDAO extends ComputeBaseDAO {
         }
         
         try {
-            StringBuffer sql = new StringBuffer("select rmp.accession, rmp.mate_acc, bs.sample_name " +
+            StringBuilder sql = new StringBuilder("select rmp.accession, rmp.mate_acc, bs.sample_name " +
                     "from read_mate_pair rmp, bio_sample bs " +
                     "where rmp.accession in (:readAccList) and rmp.sample_acc=bs.sample_acc");
             if (log.isDebugEnabled()) log.debug("readAccList length=" + readAccList.size() + "\nsql=" + sql);
@@ -256,7 +251,7 @@ public class ComputeDAO extends ComputeBaseDAO {
             log.trace("getRecruitmentFilterDataTaskForUserByGenbankId(genbankFileName="+genbankFileName+", ownerKey="+ownerKey+")");    
         }
         
-        StringBuffer sql = new StringBuffer("select task_id from task_parameter where task_id in (select task_id from task where task_owner='" + ownerKey + "' and subclass='recruitmentViewerFilterDataTask') and parameter_name='genbankFileName' and parameter_value='" + genbankFileName + "'");
+        StringBuilder sql = new StringBuilder("select task_id from task_parameter where task_id in (select task_id from task where task_owner='" + ownerKey + "' and subclass='recruitmentViewerFilterDataTask') and parameter_name='genbankFileName' and parameter_value='" + genbankFileName + "'");
 //        if (_logger.isDebugEnabled()) _logger.debug("Looking for ("+userLogin+","+genbankFileName+")\nsql=" + sql);
         Query query = getCurrentSession().createSQLQuery(sql.toString());
         List returnList = query.list();
@@ -277,7 +272,8 @@ public class ComputeDAO extends ComputeBaseDAO {
         
         // Is the stack trace is thrown into the event description, trunkcate it.  Data should never be put in the event
         // description.
-        if (event.getDescription().length()>MAX_MESSAGE_SIZE) {
+        int MAX_MESSAGE_SIZE = 10000;
+        if (event.getDescription().length()> MAX_MESSAGE_SIZE) {
             event.setDescription(event.getDescription().substring(0, MAX_MESSAGE_SIZE));
         }
         Task tmpTask = getTaskById(taskId);
@@ -477,7 +473,7 @@ public class ComputeDAO extends ComputeBaseDAO {
             //   SQLQuery query = getCurrentSession().createSQLQuery(sqlQuery);
 
             Query query;
-            StringBuffer hql = new StringBuffer();
+            StringBuilder hql = new StringBuilder();
             hql.append("from GridJobStatus a where a.taskID=").append(taskId);
             if (states != null && states.length > 0) {
                 hql.append(" and a.status in (");
@@ -557,7 +553,7 @@ public class ComputeDAO extends ComputeBaseDAO {
         }
         
         try {
-            StringBuffer sql = new StringBuffer("update task t set expiration_date=current_timestamp from task_parameter p where p.parameter_value='" +
+            StringBuilder sql = new StringBuilder("update task t set expiration_date=current_timestamp from task_parameter p where p.parameter_value='" +
                     giNumber + "' and p.parameter_name='giNumber' and t.task_id=p.task_id and t.task_owner='user:system'");
             if (log.isDebugEnabled()) log.debug("sql=" + sql);
             SQLQuery query = getCurrentSession().createSQLQuery(sql.toString());
@@ -635,7 +631,7 @@ public class ComputeDAO extends ComputeBaseDAO {
 
             // Technically, should have one hit - very old data may not have
             BigInteger tmpResult = (BigInteger) results.get(0);
-            return (Task) sessionFactory.getCurrentSession().get(Task.class, tmpResult.longValue());
+            return sessionFactory.getCurrentSession().get(Task.class, tmpResult.longValue());
         }
         catch (Exception e) {
             throw handleException(e, "TaskDAOImpl - getTaskById");
@@ -650,7 +646,7 @@ public class ComputeDAO extends ComputeBaseDAO {
         
     	Calendar minDate = Calendar.getInstance();
     	minDate.add(Calendar.DATE, -1);
-        StringBuffer hql = new StringBuffer();
+        StringBuilder hql = new StringBuilder();
         hql.append("select distinct task from Task task ");
         hql.append("join task.events event "); 
         hql.append("where task.owner = :owner "); 
@@ -779,7 +775,7 @@ public class ComputeDAO extends ComputeBaseDAO {
         }
         
         String sql = "select e.defline, s.sequence from sequence_entity e, bio_sequence s where e.accession='" + targetAcc + "' and s.sequence_id=e.sequence_id;";
-        StringBuffer returnEntry = new StringBuffer();
+        StringBuilder returnEntry = new StringBuilder();
         Query query = getCurrentSession().createSQLQuery(sql);
         List result = query.list();
         if (result.size() == 1) {
@@ -807,7 +803,7 @@ public class ComputeDAO extends ComputeBaseDAO {
         }
         
         try {
-            StringBuffer hql = new StringBuffer("select clazz from GenericServiceDefinitionNode clazz");
+            StringBuilder hql = new StringBuilder("select clazz from GenericServiceDefinitionNode clazz");
             hql.append(" where clazz.name='").append(serviceName).append("'");
             hql.append(" and clazz.visibility != '").append(Node.VISIBILITY_INACTIVE).append("'");
             if (log.isDebugEnabled()) log.debug("hql=" + hql);
@@ -846,9 +842,9 @@ public class ComputeDAO extends ComputeBaseDAO {
     }
 
     public UserToolEvent addEventToSession(UserToolEvent userToolEvent) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("addEventToSession(userToolEvent="+userToolEvent+")");    
-        }
+//        if (log.isTraceEnabled()) {
+//            log.trace("addEventToSession(userToolEvent="+userToolEvent+")");
+//        }
         
         try {
             // If there is no session AND the event is the initial login then save to get the first GUID for the session

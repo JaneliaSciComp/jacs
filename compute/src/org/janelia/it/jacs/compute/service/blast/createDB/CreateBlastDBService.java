@@ -48,7 +48,7 @@ public class CreateBlastDBService implements IService {
 
     protected void init(IProcessData processData) throws MissingDataException, IOException, DaoException, ServiceException {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-        computeDAO = new ComputeDAO(logger);
+        computeDAO = new ComputeDAO();
         task = ProcessDataHelper.getTask(processData);
         sessionName = ProcessDataHelper.getSessionRelativePath(processData);
         // If the node id exists, use it

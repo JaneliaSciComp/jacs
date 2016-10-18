@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.user_data"
                    default-access="property"
@@ -39,8 +39,8 @@
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
         <property name="sourceName" unique="true" not-null="true"
-            column="source_name" type="string" index="data_source_key_source_name"/>
-        <property name="dataVersion" type="string" column="data_version"/>
+            column="source_name" type="java.lang.String" index="data_source_key_source_name"/>
+        <property name="dataVersion" type="java.lang.String" column="data_version"/>
     </class>
 
 </hibernate-mapping>

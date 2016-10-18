@@ -137,8 +137,8 @@ public class DefLoader implements Serializable {
             sequenceDef.getLocalInputParameters().add(new Parameter(name, null, null, false));
         }
         
-        List<Element> inputs = new ArrayList<Element>();
-        List<Element> outputs = new ArrayList<Element>();
+        List<Element> inputs = new ArrayList<>();
+        List<Element> outputs = new ArrayList<>();
         
         List children = sequenceElement.elements();
         if (children != null) {
@@ -177,8 +177,8 @@ public class DefLoader implements Serializable {
     /**
      * Initializes the sequence definition using the "include" element
      *
-     * @param operationElement  operation defined in the process file
-     * @param parentSequenceDef parent sequence definition from the process file
+     * @param includeElement  operation defined in the process file
+     * @param parentSeriesDef parent sequence definition from the process file
      * @return returns the operation definition
      */
     private SequenceDef createSequenceDefViaInclude(Element includeElement, SeriesDef parentSeriesDef) {
@@ -189,7 +189,7 @@ public class DefLoader implements Serializable {
         SequenceDef sequenceDef = new SequenceDef(parentSeriesDef);
         initSeriesDef(sequenceDef, includeElement);
         sequenceDef.setIncluded(true);
-        
+
     	for(ActionDef actionDef : processDef.getChildActionDefs()) {
             sequenceDef.addChildDef(actionDef);
     	}
@@ -293,12 +293,12 @@ public class DefLoader implements Serializable {
     
     /**
      * Set a parameter in the given set, overriding any current parameters with that name.
-     * @param parameterSet
-     * @param parameter
+     * @param parameterSet set of params
+     * @param parameter param to add
      */
     private void setParameter(Set<Parameter> parameterSet, Parameter parameter) {
 
-    	Set<Parameter> existingSet = new HashSet<Parameter>();
+    	Set<Parameter> existingSet = new HashSet<>();
     	for(Parameter p : parameterSet) {
     		if (p.getName().equals(parameter.getName())) {
     			existingSet.add(p);
@@ -507,16 +507,16 @@ public class DefLoader implements Serializable {
     }
 
     private Set extractAttributeNames(List attributes) {
-        Set<String> attributeNames = new HashSet<String>();
+        Set<String> attributeNames = new HashSet<>();
         for (Object attribute : attributes) {
             attributeNames.add(((Attribute) attribute).getName());
         }
         return attributeNames;
     }
 
-    private static Set<String> VALID_SERIES_ATTRIBUTES = new HashSet<String>();
-    private static Set<String> VALID_ACTION_ATTRIBUTES = new HashSet<String>();
-    private static Set<String> VALID_OPERATION_ATTRIBUTES = new HashSet<String>();
+    private static Set<String> VALID_SERIES_ATTRIBUTES = new HashSet<>();
+    private static Set<String> VALID_ACTION_ATTRIBUTES = new HashSet<>();
+    private static Set<String> VALID_OPERATION_ATTRIBUTES = new HashSet<>();
 
     static {
         VALID_ACTION_ATTRIBUTES.add(NAME_ATTR);

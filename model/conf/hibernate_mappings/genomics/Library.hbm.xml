@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.genomics"
                    default-access="property"
@@ -47,7 +47,7 @@
             <key column="library_id"/>
             <one-to-many class="org.janelia.it.jacs.model.genomics.Read"/>
         </set>
-        <property type="string" name="sampleAcc" column="sample_acc" />
+        <property type="java.lang.String" name="sampleAcc" column="sample_acc" />
         <many-to-one class="org.janelia.it.jacs.model.genomics.Sample" name="sample" lazy="proxy"
                      column="sample_acc" property-ref="sampleAcc" insert="false" update="false"/>
     </class>

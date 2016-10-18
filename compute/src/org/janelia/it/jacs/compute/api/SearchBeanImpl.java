@@ -53,7 +53,7 @@ public class SearchBeanImpl implements SearchBeanLocal, SearchBeanRemote {
      * Duplicate to ComputeBean method
      */
     public Task saveOrUpdateTask(Task task) throws DaoException {
-        new ComputeDAO(_logger).saveOrUpdate(task);
+        new ComputeDAO().saveOrUpdate(task);
         return task;
     }
 
@@ -61,22 +61,22 @@ public class SearchBeanImpl implements SearchBeanLocal, SearchBeanRemote {
      * Duplicate to ComputeBean method
      */
     public Task getTaskById(long taskId) {
-        ComputeDAO _computeDAO = new ComputeDAO(_logger);
+        ComputeDAO _computeDAO = new ComputeDAO();
         return _computeDAO.getTaskById(taskId);
     }
 
     public SearchResultNode getSearchTaskResultNode(long searchTaskId) throws DaoException {
-        ComputeDAO _computeDAO = new ComputeDAO(_logger);
+        ComputeDAO _computeDAO = new ComputeDAO();
         return _computeDAO.getSearchTaskResultNode(searchTaskId);
     }
 
     public Task getTaskWithEventsById(long taskId) throws DaoException {
-        ComputeDAO _computeDAO = new ComputeDAO(_logger);
+        ComputeDAO _computeDAO = new ComputeDAO();
         return _computeDAO.getTaskWithEventsById(taskId);
     }
 
     public Task getTaskWithResultsById(long taskId) throws DaoException {
-        ComputeDAO _computeDAO = new ComputeDAO(_logger);
+        ComputeDAO _computeDAO = new ComputeDAO();
         return _computeDAO.getTaskWithResultsById(taskId);
     }
 

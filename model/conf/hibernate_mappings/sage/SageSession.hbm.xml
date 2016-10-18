@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <!-- Generated Oct 9, 2015 2:22:36 PM by Hibernate Tools 3.4.0.CR1 -->
 <hibernate-mapping>
     <class name="org.janelia.it.jacs.model.sage.SageSession" table="session" catalog="sage">
@@ -20,7 +20,7 @@
         <many-to-one name="line" class="org.janelia.it.jacs.model.sage.Line" fetch="select">
             <column name="line_id" not-null="true" />
         </many-to-one>
-        <property name="name" type="string">
+        <property name="name" type="java.lang.String">
             <column name="name" length="767" not-null="true" />
         </property>
         <many-to-one name="experiment" class="org.janelia.it.jacs.model.sage.Experiment" fetch="select">
@@ -29,7 +29,7 @@
         <property name="phaseId" type="java.lang.Integer">
             <column name="phase_id" />
         </property>
-        <property name="annotator" type="string">
+        <property name="annotator" type="java.lang.String">
             <column name="annotator" not-null="true" />
         </property>
         <property name="createDate" type="timestamp">

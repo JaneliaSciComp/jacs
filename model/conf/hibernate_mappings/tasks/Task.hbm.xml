@@ -15,7 +15,7 @@
   ~ bioinformatics applications, but it is provided "AS IS" and WITHOUT
   ~ ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
   ~ implied warranties of merchantability or fitness for any particular
-  ~ purpose.  For details, see the full text of the license in the file
+  ~ purpose.  For details, see the full textH of the license in the file
   ~ LICENSE.txt.
   ~
   ~ You should have received a copy of the Artistic License 2.0 along with
@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.tasks"
                    default-access="property"
@@ -63,14 +63,14 @@
             <one-to-many class="org.janelia.it.jacs.model.tasks.TaskMessage" />
         </set>
         <property name="parentTaskId" type="java.lang.Long" column="parent_task_id" not-null="false"/>
-        <property name="taskName" type="string" column="task_name" not-null="true"/>
-        <property name="owner" type="string" column="task_owner" not-null="true"/>
+        <property name="taskName" type="java.lang.String" column="task_name" not-null="true"/>
+        <property name="owner" type="java.lang.String" column="task_owner" not-null="true"/>
         <property name="jobName" type="java.lang.String">
            <column name="job_name" sql-type="varchar(255)"/>
         </property>
         <property name="taskDeleted" type="boolean" column="task_deleted_flag" not-null="false"/>
         <property name="expirationDate" type="date" column="expiration_date" not-null="false"/>
-        <property name="taskNote" type="string" column="task_note" not-null="false"/>
+        <property name="taskNote" type="java.lang.String" column="task_note" not-null="false"/>
         <list name="events" cascade="all" table="task_event" lazy="true" inverse="false">
             <key column="task_id" foreign-key="task_event_fk_task"/>
             <index column="event_no"/>
@@ -335,7 +335,7 @@
                           class="Task"
                           column="task_id"/>
             <key-property name="eventIndex"
-                          type="int"
+                          type="java.lang.Integer"
                           column="event_no"/>
         </composite-id>
         <many-to-one name="task"
@@ -346,7 +346,7 @@
                      update="false"
                      not-null="true"/>
         <property name="description"
-                  type="string"
+                  type="java.lang.String"
                   access="property"
                   column="description"
                   not-null="false"
@@ -370,7 +370,7 @@
                   unique="false"/>
 
         <property name="eventType"
-                  type="string"
+                  type="java.lang.String"
                   access="property"
                   column="event_type"
                   not-null="true"
@@ -388,10 +388,10 @@
            table="task_parameter">
         <composite-id>
             <key-many-to-one name="task" class="Task" column="task_id"/>
-            <key-property name="name" type="string" column="parameter_name"/>
+            <key-property name="name" type="java.lang.String" column="parameter_name"/>
         </composite-id>
         <property name="value"
-                  type="string"
+                  type="java.lang.String"
                   access="property"
                   column="parameter_value"
                   not-null="false"

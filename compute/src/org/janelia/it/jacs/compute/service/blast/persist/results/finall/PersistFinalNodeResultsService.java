@@ -72,7 +72,7 @@ public class PersistFinalNodeResultsService implements IService {
     }
 
     protected void init(IProcessData processData) throws MissingDataException, IOException, ClassNotFoundException {
-        computeDAO = new ComputeDAO(logger);
+        computeDAO = new ComputeDAO();
         blastDestOutputDirs = (List<File>)processData.getMandatoryItem(BlastProcessDataConstants.BLAST_DEST_OUTPUT_DIR);
         resultFileNode = (BlastResultFileNode) ProcessDataHelper.getResultFileNode(processData);
     }

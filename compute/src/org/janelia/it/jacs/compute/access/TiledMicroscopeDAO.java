@@ -59,9 +59,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public static final String NEURON_STYLES_PREF = "annotation-neuron-styles";
 
     public TiledMicroscopeDAO(Logger logger) {
-        super(logger);
+        super();
         annotationDAO = new AnnotationDAO(logger);
-        computeDAO = new ComputeDAO(logger);
+        computeDAO = new ComputeDAO();
 
     }
 

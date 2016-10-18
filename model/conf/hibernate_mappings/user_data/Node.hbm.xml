@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
         "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.user_data"
                    default-access="property"
@@ -49,25 +49,25 @@
 
         <discriminator column="subclass" type="java.lang.String"/>
 
-        <property name="name" type="string"/>
+        <property name="name" type="java.lang.String"/>
 
-        <property name="owner" type="string" column="node_owner"/>
+        <property name="owner" type="java.lang.String" column="node_owner"/>
 
         <many-to-one name="task" class="org.janelia.it.jacs.model.tasks.Task"
                      column="task_id" not-null="false"
                      foreign-key="node_fk_task" index="node_fk_task"/>
 
-        <property name="description" type="string"/>
+        <property name="description" type="java.lang.String"/>
 
-        <property name="visibility" type="string"/>
+        <property name="visibility" type="java.lang.String"/>
 
-        <property name="dataType" type="string" column="data_type"/>
+        <property name="dataType" type="java.lang.String" column="data_type"/>
 
         <property name="length" type="java.lang.Long" column="length"/>
 
         <property name="ord" type="java.lang.Integer" column="ord"/>
 
-        <property name="relativeSessionPath" type="string" column="relative_session_path"/>
+        <property name="relativeSessionPath" type="java.lang.String" column="relative_session_path"/>
 
         <subclass name="org.janelia.it.jacs.model.user_data.blast.BlastResultNode" discriminator-value="BlastResultNode"
                   dynamic-update="true"
@@ -101,7 +101,7 @@
                       optimistic-lock="false"
                       unique="false"/>
 
-            <property name="pathOverride" type="string" column="path_override"/>
+            <property name="pathOverride" type="java.lang.String" column="path_override"/>
 
             <subclass name="org.janelia.it.jacs.model.user_data.SessionFileNode" discriminator-value="SessionFileNode"
                       dynamic-update="true"

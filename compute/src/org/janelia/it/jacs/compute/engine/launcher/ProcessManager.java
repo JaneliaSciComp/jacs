@@ -113,7 +113,7 @@ public class ProcessManager {
     }
 
     private Task loadTask(long taskId) {
-        return new ComputeDAO(logger).getTaskById(taskId);
+        return new ComputeDAO().getTaskById(taskId);
     }
 
     /**

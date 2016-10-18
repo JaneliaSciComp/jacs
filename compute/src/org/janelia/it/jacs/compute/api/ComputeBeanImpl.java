@@ -78,13 +78,12 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     protected static final String JACS_DATA_ARCHIVE_DIR =
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
 
-    private ComputeDAO computeDAO = new ComputeDAO(logger);
+    private ComputeDAO computeDAO = new ComputeDAO();
     private SubjectDAO subjectDAO = new SubjectDAO(logger);
     private DispatcherDAO dispatcherDAO = new DispatcherDAO();
 
-    // @todo WildFly fix - put this back in
-//    @Resource(mappedName = MetricsLoggingConstants.QUEUE)
-//    private Queue metricsLoggingQueue;
+    @Resource(mappedName = "java:/jboss/exported/queue/MetricsLoggingSingletonMDB")
+    private Queue metricsLoggingQueue;
     
     @Resource(mappedName="java:/ConnectionFactory")
     private ConnectionFactory connectionFactory;
@@ -182,10 +181,9 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             }
             message.setObject(userToolEvent);
 
-            // @todo WildFly fix - put this back in
             // Send and complete.
-//            producer = session.createProducer(metricsLoggingQueue);
-//            producer.send(message);
+            producer = session.createProducer(metricsLoggingQueue);
+            producer.send(message);
             
             return userToolEvent;
         }
@@ -249,10 +247,9 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             }
             message.setObject(userToolEvents);
 
-            // @todo WildFly fix - put this back in
             // Send and complete.
-//            producer = session.createProducer(metricsLoggingQueue);
-//            producer.send(message);
+            producer = session.createProducer(metricsLoggingQueue);
+            producer.send(message);
 
             return;
         } catch (Throwable th) {

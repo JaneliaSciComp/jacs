@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.genomics"
                    default-access="property"
@@ -36,10 +36,10 @@
 
     <class name="org.janelia.it.jacs.model.genomics.EntityTypeGenomic" table="entity_type" mutable="false">
 
-        <id name="code" type="int" access="property"/>
-        <property name="name" type="string" not-null="true" unique="true" column="name"/>
-        <property name="abbrev" type="string" not-null="true" unique="true" column="abbrev"/>
-        <property name="description" type="string" column="description"/>
+        <id name="code" type="java.lang.Integer" access="property"/>
+        <property name="name" type="java.lang.String" not-null="true" unique="true" column="name"/>
+        <property name="abbrev" type="java.lang.String" not-null="true" unique="true" column="abbrev"/>
+        <property name="description" type="java.lang.String" column="description"/>
         <many-to-one name="sequenceType" class="SequenceType" lazy="false" column="sequence_type" not-null="true"/>
         
     </class>

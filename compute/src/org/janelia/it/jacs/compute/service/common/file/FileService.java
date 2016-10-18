@@ -159,7 +159,7 @@ public class FileService implements IService {
     }
 
     private void uploadFile(IProcessData processData) throws Exception {
-        ComputeDAO computeDAO = new ComputeDAO(logger);
+        ComputeDAO computeDAO = new ComputeDAO();
         UploadFileTask uploadTask = (UploadFileTask) ProcessDataHelper.getTask(processData);
         String sessionName = ProcessDataHelper.getSessionRelativePath(processData);
         String path = uploadTask.getPathToOriginalFile();

@@ -40,8 +40,8 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
     }
 
     public List<TaskStatus> getActiveTasks() {
-        ComputeDAO computeDAO = new ComputeDAO(logger);
-        List<TaskStatus> tasks = new LinkedList<TaskStatus>();
+        ComputeDAO computeDAO = new ComputeDAO();
+        List<TaskStatus> tasks = new LinkedList<>();
         try {
 
             List<Long> taskIDs = computeDAO.getActiveTasks();
@@ -57,8 +57,8 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
     }
 
     public List<TaskStatus> getWaitingTasks() {
-        ComputeDAO computeDAO = new ComputeDAO(logger);
-        List<TaskStatus> tasks = new LinkedList<TaskStatus>();
+        ComputeDAO computeDAO = new ComputeDAO();
+        List<TaskStatus> tasks = new LinkedList<>();
         try {
 
             List<Long> taskIDs = computeDAO.getWaitingTasks();
@@ -75,7 +75,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
     public List getGridJobStatusesByTaskId(long taskId) {
         try {
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
             return computeDAO.getGridJobStatusesByTaskId(taskId, null);
         }
         catch (Exception e) {
@@ -90,10 +90,10 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
     public List getJobIdsByTaskId(long taskId, String[] states) {
         try {
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
             List<GridJobStatus> jobs = computeDAO.getGridJobStatusesByTaskId(taskId, states);
             if (jobs != null) {
-                List<String> jobIDs = new LinkedList<String>();
+                List<String> jobIDs = new LinkedList<>();
                 for (GridJobStatus job : jobs) {
                     jobIDs.add(job.getJobID());
                 }
@@ -110,7 +110,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
     public GridJobStatus getGridJobStatus(long taskId, String jobId) {
         try {
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
             return computeDAO.getGridJobStatus(taskId, jobId);
         }
         catch (Exception e) {
@@ -120,7 +120,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
     }
 
     public TaskStatus getTaskStatus(long taskId) {
-        ComputeDAO computeDAO = new ComputeDAO(logger);
+        ComputeDAO computeDAO = new ComputeDAO();
         List<GridJobStatus> gridJobs = computeDAO.getGridJobStatusesByTaskId(taskId, null);
         return (new TaskStatus(taskId, gridJobs));
     }
@@ -168,7 +168,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
         try {
 
             logger.debug("bulkUpdateGridJobInfo - Updating Job state and Resource usage for "+changedJobStateMap.size()+" jobs (task="+taskId+").");
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
             for (String jobId : changedJobStateMap.keySet()) {
                 computeDAO.updateJobInfo(taskId, jobId, changedJobStateMap.get(jobId), changedJobResourceMap.get(jobId));
             }
@@ -182,7 +182,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
     /////////// ------ LOCAL INTERFACES ------- /////////////
     public void updateJobStatus(long taskId, String jobId, GridJobStatus.JobState state) {
         try {
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
             computeDAO.updateJobStatus(taskId, jobId, state);
         }
         catch (Exception e) {
@@ -193,7 +193,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
     public void updateJobInfo(long taskId, String jobId, GridJobStatus.JobState state, Map<String, String> infoMap) {
         try {
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
             computeDAO.updateJobInfo(taskId, jobId, state, infoMap);
         }
         catch (Exception e) {
@@ -204,7 +204,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
     public void bulkAddGridJobStatus(long taskId, String queue, Set<String> jobIds, GridJobStatus.JobState state) {
         try {
             //logger.debug("Storing " + jobIds.size() + " statuses for task " + taskId);
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
             computeDAO.bulkAddGridJobStatus(taskId, queue, jobIds, state);
         }
         catch (Exception e) {
@@ -214,7 +214,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
     public void bulkUpdateGridJobStatus(long taskId, Map<String, GridJobStatus.JobState> jobStates) {
         try {
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
             computeDAO.bulkUpdateGridJobStatus(taskId, jobStates);
         }
         catch (Exception e) {
@@ -224,7 +224,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
     public void saveGridJobStatus(GridJobStatus gridJobStatus) {
         try {
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
             computeDAO.saveOrUpdateGridJobStatus(gridJobStatus);
         }
         catch (Exception e) {
@@ -234,7 +234,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
     public void cleanUpJobStatus(long taskId) {
         try {
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
             computeDAO.cleanUpGridJobStatus(taskId);
         }
         catch (Exception e) {
@@ -256,13 +256,13 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
         List<Long> taskIDs;
 
         // Sorted Map of <task creation time stamp, task id>
-        TreeMap<Long, Long> taskIDTimeStampSortedMap = new TreeMap<Long, Long>();
+        TreeMap<Long, Long> taskIDTimeStampSortedMap = new TreeMap<>();
 
         Date taskTime;
 
         try {
             // Get an instance of computeDAO
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
 
             // Get active task ids
             taskIDs = computeDAO.getWaitingTasks();
@@ -292,7 +292,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
         try {
             // Get an instance of computeDAO
-            ComputeDAO computeDAO = new ComputeDAO(logger);
+            ComputeDAO computeDAO = new ComputeDAO();
 
             // Get percent complete
             return computeDAO.getPercentCompleteForATask(taskId);

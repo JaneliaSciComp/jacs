@@ -20,7 +20,7 @@ import org.janelia.it.jacs.model.user_data.User;
 public class SubjectDAO extends ComputeBaseDAO {
 
     public SubjectDAO(Logger logger) {
-        super(logger);
+        super();
     }
 
     public List<Subject> getSubjects() {

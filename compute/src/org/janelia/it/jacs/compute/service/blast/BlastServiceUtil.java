@@ -62,7 +62,7 @@ public class BlastServiceUtil {
             }
             BlastDatabaseFileNode bfn;
             try {
-                bfn = new ComputeDAO(logger).getBlastDatabaseFileNodeById(Long.parseLong(databaseFileNodeIdString));
+                bfn = new ComputeDAO().getBlastDatabaseFileNodeById(Long.parseLong(databaseFileNodeIdString));
             }
             catch (Exception e) {
                 throw new RuntimeException(e);

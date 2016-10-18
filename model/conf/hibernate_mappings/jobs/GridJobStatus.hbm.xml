@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
         "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.tasks"
                    default-access="property"
@@ -46,9 +46,9 @@
 
         <composite-id>
 
-            <key-property name="taskID" column="task_id" type="long" />
+            <key-property name="taskID" column="task_id" type="java.lang.Long" />
 
-            <key-property name="jobID" column="job_id" type="string" />
+            <key-property name="jobID" column="job_id" type="java.lang.String" />
 
         </composite-id>
 
@@ -74,9 +74,9 @@
 
         <property name="exitStatus" type="java.lang.Short" column="exit_status" />
 
-        <property name="status" type="string" column="status" />
+        <property name="status" type="java.lang.String" column="status" />
 
-        <property name="queue" type="string" column="queue" />
+        <property name="queue" type="java.lang.String" column="queue" />
 
     </class>
 </hibernate-mapping>

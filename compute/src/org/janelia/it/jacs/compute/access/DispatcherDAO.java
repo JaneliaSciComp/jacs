@@ -156,7 +156,7 @@ public class DispatcherDAO {
     private SessionFactory getSessionFactory() {
         try {
             if (sessionFactory==null) {
-                EntityManager em = Persistence.createEntityManagerFactory("Workstation_pu").createEntityManager();
+                EntityManager em = Persistence.createEntityManagerFactory("primary").createEntityManager();
                 Session session = (Session)em.getDelegate();
                 sessionFactory = session.getSessionFactory();
             }

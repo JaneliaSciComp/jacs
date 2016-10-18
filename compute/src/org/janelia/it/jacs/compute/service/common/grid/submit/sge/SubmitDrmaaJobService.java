@@ -185,7 +185,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
                     " must exist before a grid job is submitted");
         }
         // Needs to run in separate transaction
-        if (computeDAO == null) {computeDAO = new ComputeDAO(logger);}
+        if (computeDAO == null) {computeDAO = new ComputeDAO();}
 
         // ensure the SGE dirs exist
         FileUtil.ensureDirExists(getSGEConfigurationDirectory());

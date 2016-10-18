@@ -37,7 +37,6 @@ public class InitSampleAttributesService extends AbstractDomainService {
         data.putItem("REFERENCE_CHANNEL", referenceChannels);
 
         final List<AnatomicalArea> sampleAreas = getSampleAreas(objectiveSample);
-        // todo NGDEP What?!??!?!?!  Duplicate collections different, non-contextual keys?!
         if (sampleAreas != null) {
             // Singular for the for loop
             data.putItem("SAMPLE_AREA", sampleAreas);

@@ -166,7 +166,7 @@ public class PersistFinalXMLResultsGridService extends SubmitDrmaaJobService {
 
     private void saveBlastHitCount() throws DaoException {
         this.resultFileNode.setBlastHitCount(totalBlastHits);
-        new ComputeDAO(logger).genericSave(resultFileNode);
+        new ComputeDAO().genericSave(resultFileNode);
     }
 
     private void concatinateResults(String format) throws IOException, MissingDataException {

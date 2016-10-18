@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.genomics"
                    default-access="property"
@@ -47,7 +47,7 @@
         <many-to-one name="owner" class="org.janelia.it.jacs.model.user_data.User" lazy="proxy" cascade="none" column="owner_id"/>
         <property name="sourceId" column="source_id" type="java.lang.Integer" not-null="true" unique="false"/>
         <property name="obsFlag" column="obs_flag" type="java.lang.Boolean" not-null="true" unique="false"/>
-        <property name="replacedBy" type="string" column="replaced_by" />
+        <property name="replacedBy" type="java.lang.String" column="replaced_by" />
 <!--
         basic data from fasta file
 -->
@@ -58,33 +58,33 @@
 <!--
         general details from defline
 -->
-        <property name="externalSource" type="string" column="external_source"/>
-        <property name="externalAcc" type="string" column="external_acc"/>
+        <property name="externalSource" type="java.lang.String" column="external_source"/>
+        <property name="externalAcc" type="java.lang.String" column="external_acc"/>
         <property name="ncbiGINumber" type="java.lang.Integer" column="ncbi_gi_number"/>
 <!--
         genomic context
 -->
-        <property name="organism" type="string" column="organism"/>
+        <property name="organism" type="java.lang.String" column="organism"/>
         <property name="taxonId" type="java.lang.Integer" column="taxon_id"/>
-        <property name="assemblyAcc" type="string" column="assembly_acc"/>
+        <property name="assemblyAcc" type="java.lang.String" column="assembly_acc"/>
         <many-to-one class="Assembly" name="assembly" lazy="proxy" column="assembly_id" />
-        <property type="string" name="sampleAcc" column="sample_acc" />
+        <property type="java.lang.String" name="sampleAcc" column="sample_acc" />
         <many-to-one class="org.janelia.it.jacs.model.genomics.Sample" name="sample" lazy="proxy" column="sample_id"/>
-        <property name="libraryAcc" type="string" column="library_acc"/>
+        <property name="libraryAcc" type="java.lang.String" column="library_acc"/>
         <many-to-one name="library" class="org.janelia.it.jacs.model.genomics.Library" lazy="proxy" column="library_id"/>
 <!--
         detailed subclasses
 -->
         <subclass name="Nucleotide" discriminator-value="0" lazy="true">
             <!--<subclass name="Chromosome" discriminator-value="1" lazy="true">-->
-                <!--<property name="type" type="string" column="type"/>-->
+                <!--<property name="type" type="java.lang.String" column="type"/>-->
             <!--</subclass>-->
             <subclass name="Scaffold" discriminator-value="2" lazy="true">
             </subclass>
             <subclass name="Read" discriminator-value="3" lazy="true">
-                <property name="traceAcc" type="string" column="trace_acc"/>
-                <property name="templateAcc" type="string" column="template_acc"/>
-                <property name="sequencingDirection" type="string" column="sequencing_direction"/>
+                <property name="traceAcc" type="java.lang.String" column="trace_acc"/>
+                <property name="templateAcc" type="java.lang.String" column="template_acc"/>
+                <property name="sequencingDirection" type="java.lang.String" column="sequencing_direction"/>
                 <property name="clearRangeBegin" type="java.lang.Integer" column="clear_range_begin"/>
                 <property name="clearRangeEnd" type="java.lang.Integer" column="clear_range_end"/>
                 <set name="mates" table="read_mate" lazy="false" cascade="none">
@@ -93,20 +93,20 @@
                 </set>
             </subclass>
             <subclass name="ORF" discriminator-value="5" lazy="true">
-                <property type="string" name="proteinAcc" column="protein_acc"/>
+                <property type="java.lang.String" name="proteinAcc" column="protein_acc"/>
                 <many-to-one class="Protein" name="proteinEntity" lazy="proxy" column="protein_id"/>
-                <property type="string" name="dnaAcc" column="dna_acc" />
+                <property type="java.lang.String" name="dnaAcc" column="dna_acc" />
                 <many-to-one class="Nucleotide" name="dnaEntity" lazy="proxy" column="dna_id"/>
                 <property type="java.lang.Integer" name="dnaBegin" column="dna_begin"/>
                 <property type="java.lang.Integer" name="dnaEnd" column="dna_end"/>
                 <property type="java.lang.Integer" name="dnaOrientation" column="dna_orientation"/>
-                <property type="string" name="translationTable" column="translation_table" />
-                <property type="string" name="stop5Prime" column="stop_5_prime"/>
-                <property type="string" name="stop3Prime" column="stop_3_prime"/>
+                <property type="java.lang.String" name="translationTable" column="translation_table" />
+                <property type="java.lang.String" name="stop5Prime" column="stop_5_prime"/>
+                <property type="java.lang.String" name="stop3Prime" column="stop_3_prime"/>
             </subclass>
             <!--<subclass name="NonCodingRNA" discriminator-value="8" lazy="true">-->
-                <!--<property name="type" type="string" column="type"/>-->
-                <!--<property type="string" name="dnaAcc" column="dna_acc" />-->
+                <!--<property name="type" type="java.lang.String" column="type"/>-->
+                <!--<property type="java.lang.String" name="dnaAcc" column="dna_acc" />-->
                 <!--<many-to-one class="Nucleotide" name="dnaEntity" lazy="proxy" column="dna_id"/>-->
                 <!--<property type="java.lang.Integer" name="dnaBegin" column="dna_begin"/>-->
                 <!--<property type="java.lang.Integer" name="dnaEnd" column="dna_end"/>-->
@@ -116,16 +116,16 @@
 
         <subclass name="Peptide" discriminator-value="7" lazy="true">
             <subclass name="Protein" discriminator-value="6" lazy="true">
-                <property type="string" name="orfAcc" column="orf_acc"/>
+                <property type="java.lang.String" name="orfAcc" column="orf_acc"/>
                 <many-to-one class="ORF" name="orfEntity" lazy="proxy" column="orf_id"/>
-                <property type="string" name="dnaAcc" column="dna_acc" />
+                <property type="java.lang.String" name="dnaAcc" column="dna_acc" />
                 <many-to-one class="Nucleotide" name="dnaEntity" lazy="proxy" column="dna_id"/>
                 <property type="java.lang.Integer" name="dnaBegin" column="dna_begin"/>
                 <property type="java.lang.Integer" name="dnaEnd" column="dna_end"/>
                 <property type="java.lang.Integer" name="dnaOrientation" column="dna_orientation"/>
-                <property type="string" name="translationTable" column="translation_table" />
-                <property type="string" name="stop5Prime" column="stop_5_prime"/>
-                <property type="string" name="stop3Prime" column="stop_3_prime"/>
+                <property type="java.lang.String" name="translationTable" column="translation_table" />
+                <property type="java.lang.String" name="stop5Prime" column="stop_5_prime"/>
+                <property type="java.lang.String" name="stop3Prime" column="stop_3_prime"/>
             </subclass>
         </subclass>
 

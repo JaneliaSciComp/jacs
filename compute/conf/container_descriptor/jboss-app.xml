@@ -28,11 +28,11 @@
     <!--<loader-repository> javax.xml.bind:loader=compute.ear-->
 		<!--<loader-repository-config> java2ParentDelegation=true </loader-repository-config>-->
 	<!--</loader-repository>-->
-    <module>
-        <service>compute.sar</service>
-    </module>
-    <module>
-        <har>compute.har</har>
-    </module>
+    <!--<module>-->
+        <!--<service>compute.sar</service>-->
+    <!--</module>-->
+    <!--<module>-->
+        <!--<har>compute.har</har>-->
+    <!--</module>-->
 </jboss-app>
 

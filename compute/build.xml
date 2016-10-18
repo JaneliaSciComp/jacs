@@ -65,7 +65,7 @@
 
     </target>
 
-	<target name="local-compile" depends="setup, make-classes-dir, make-lib-dir" if="src.dir.exists">
+	<target name="local-compile" depends="setup, make-classes-dir, make-lib-dir,make-hibernate-jar" if="src.dir.exists">
 	</target>
 
     <target name="local-jar" depends="local-compile, compile, make-jars-dir" unless="manifest.classpath">  
@@ -75,11 +75,13 @@
 
         <!-- Maintenance note: to add a jar to the lib folder of compute's ear file, add it to compute.classpath. -->
         <path id="compute.classpath">
-            <fileset dir="${basedir}/lib" includes="**/*.jar"/>
+            <fileset dir="${basedir}/lib" includes="**/*.jar" excludes="**/dom4j-1.6.1.jar"/>
+            <fileset dir="${build.jars.dir}" includes="compute-hibernate.jar"/>
 		    <fileset file="${common.dir}/Logging/slf4j-api-1.7.5.jar"/>
 		    <fileset file="${common.dir}/Logging/slf4j-log4j12-1.7.5.jar"/>
 			<fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Directory" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/Directory" includes="api-all-1.0.0-M30.jar"/>
+            <fileset dir="${common.dir}/Directory" includes="commons-pool-1.6.jar"/>
             <fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
@@ -90,7 +92,7 @@
             <fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
             <fileset dir="${common.dir}/commons-net" includes="**/*.jar"/>
             <fileset dir="${common.dir}/JodaTime" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Hibernate-5.2.2" includes="**/*.jar"/>
+            <!--<fileset dir="${common.dir}/Hibernate-5.2.2" includes="**/*.jar"/>-->
             <fileset dir="${common.dir}/protostuff-1.3.9" includes="**/*.jar"/>
             <fileset dir="${common.dir}/JAX-RS-2.0.1" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Jersey-2.19" includes="**/*.jar"/>
@@ -121,8 +123,10 @@
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
                 <attribute name="Class-Path" value="${manifest.classpath}"/>
+                <attribute name="Dependencies" value="org.dom4j export"/>
             </manifest>
             <metainf dir="${condesc.dir}" includes="persistence.xml"/>
+            <metainf dir="${condesc.dir}" includes="computeServer-ds.xml"/>
             <metainf dir="${condesc.dir}" includes="beans.xml"/>
         </jar>
 
@@ -251,22 +255,31 @@
 
     </target>
 
-    <target name="build-ear" depends="build-war, dashboard-war" description="builds the ear file">
-
+    <target name="make-hibernate-jar">
         <!-- build .har file for Hibernate-service -->
-        <jar jarfile="${basedir}/build/jars/${localname}.har">
+        <jar jarfile="${basedir}/build/jars/${localname}-hibernate.jar">
             <fileset dir="${basedir}/../model/conf/hibernate_mappings">
-              <include name="**/*.hbm.xml"/>
+                <!--<include name="common/*.hbm.xml"/>-->
+                <!--<include name="entity/*.hbm.xml"/>-->
+                <!--<include name="genomics/*.hbm.xml"/>-->
+                <include name="jobs/*.hbm.xml"/>
+                <!--<include name="sage/*.hbm.xml"/>-->
+                <!--<include name="tasks/*.hbm.xml"/>-->
+                <!--<include name="vo/*.hbm.xml"/>-->
+                <!--<include name="user_data/*.hbm.xml"/>-->
             </fileset>
             <fileset dir="${build.classes.dir}">
-              <include name="org/janelia/it/jacs/model/**/*.class"/>
+                <include name="org/janelia/it/jacs/model/**/*.class"/>
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
-            <metainf dir="${condesc.dir}" includes="hibernate-service.xml"/>
+            <!--<metainf dir="${condesc.dir}" includes="hibernate-service.xml"/>-->
         </jar>
+    </target>
+
+    <target name="build-ear" depends="build-war, dashboard-war" description="builds the ear file">
 
         <!-- build .sar file for StartupMBean -->
         <jar jarfile="${basedir}/build/jars/${localname}.sar">
@@ -312,9 +325,7 @@
             <fileset file="${basedir}/build/jars/${secure-ws-war}"/>
             <fileset file="${basedir}/build/jars/${localname}.war"/>
             <fileset file="${basedir}/build/jars/${localname}.jar"/>
-            <fileset file="${basedir}/build/jars/${localname}.sar"/>
-            <fileset file="${basedir}/build/jars/${localname}.har"/>
-        	<zipfileset file="${shared.module}/build/jars/jacs-shared.jar" prefix="lib"/>
+         	<zipfileset file="${shared.module}/build/jars/jacs-shared.jar" prefix="lib"/>
             <zipfileset file="${model.module}/build/jars/jacs-model.jar" prefix="lib"/>
         	<zipfileset dir="${dep.dir}" prefix="lib"/>
             <fileset dir="${jacs.properties.dir}">
@@ -328,9 +339,9 @@
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
             <metainf dir="${condesc.dir}" includes="jboss-app.xml"/>
-            <metainf dir="${condesc.dir}" includes="persistence.xml"/>
+            <!--<metainf dir="${condesc.dir}" includes="persistence.xml"/>-->
             <!--<metainf dir="${condesc.dir}" includes="c3p0-service.xml"/>-->
-            <metainf dir="${condesc.dir}" includes="beans.xml"/>
+            <!--<metainf dir="${condesc.dir}" includes="beans.xml"/>-->
         </ear>
 
     </target>

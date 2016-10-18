@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 public class GeometricSearchDAO extends ComputeBaseDAO {
 
     public GeometricSearchDAO(Logger log) {
-        super(log);
+        super();
     }
     
 }

@@ -58,7 +58,7 @@ public class PersistQueryNodeService implements IService {
     protected void init(IProcessData processData) throws MissingDataException, IOException {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         this.processData = processData;
-        computeDAO = new ComputeDAO(logger);
+        computeDAO = new ComputeDAO();
         task = ProcessDataHelper.getTask(processData);
         userLogin = (String) processData.getMandatoryItem(IProcessData.USER_NAME);
         fastaFilePath = (String) processData.getMandatoryItem("fastaFilePath");

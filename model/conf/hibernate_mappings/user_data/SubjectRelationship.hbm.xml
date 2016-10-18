@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.janelia.it.jacs.model.user_data">
     <class name="org.janelia.it.jacs.model.user_data.SubjectRelationship" table="subject_relationship" lazy="true">
 
@@ -17,7 +17,7 @@
             <column name="group_subject_id" />
         </many-to-one>
         
-        <property name="relationshipType" column="relationship_type" type="string"/>
+        <property name="relationshipType" column="relationship_type" type="java.lang.String"/>
         
     </class>
 

@@ -108,9 +108,9 @@ public class MetricsLoggingSingletonMDB implements MessageListener {
         try {
             if (event != null) {
                 // Pump this event, using the compute infrastructure.
-                new ComputeDAO(logger).addEventToSession(event);
+                new ComputeDAO().addEventToSession(event);
             } else if (events != null) {
-                ComputeDAO dao = new ComputeDAO(logger);
+                ComputeDAO dao = new ComputeDAO();
                 for (UserToolEvent unbatchedEvent: events) {
                     dao.addEventToSession(unbatchedEvent);
                 }

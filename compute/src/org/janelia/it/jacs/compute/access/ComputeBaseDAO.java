@@ -10,15 +10,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.ejb.Stateless;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Initialized;
 import javax.inject.Inject;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
-import javax.persistence.Persistence;
 import javax.rmi.PortableRemoteObject;
 import javax.sql.DataSource;
 
@@ -28,6 +24,7 @@ import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.janelia.it.jacs.compute.service.utility.Resources;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -48,27 +45,27 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * Date: Oct 26, 2007
  * Time: 2:24:24 PM
  */
-public class ComputeBaseDAO {
+public abstract class ComputeBaseDAO {
     
     public static final int STATUS_TYPE = 0;
-    public static final int STATUS_DESCRIPTION = 1;
-    
-    private final String jndiPath = SystemConfigurationProperties.getString("batch.jdbc.jndiName", null);
-    private final String jdbcDriver = SystemConfigurationProperties.getString("batch.jdbc.driverClassName", null);
-    private final String jdbcUrl = SystemConfigurationProperties.getString("batch.jdbc.url", null);
-    private final String jdbcUser = SystemConfigurationProperties.getString("batch.jdbc.username", null);
-    private final String jdbcPw = SystemConfigurationProperties.getString("batch.jdbc.password", null);
+    private static final int STATUS_DESCRIPTION = 1;
 
-    protected final Logger log;
+    @Inject
+    protected Logger log;
+
     protected SessionFactory sessionFactory;
     protected Session externalSession;
 
-    public ComputeBaseDAO(Logger log) {
-        getSessionFactory();
-        this.log = log==null ? Logger.getLogger(ComputeBaseDAO.class) : log;
-    }
+    @Inject
+    protected EntityManager workstationEM;
+
 
     public Connection getJdbcConnection() throws DaoException {
+        String jndiPath = SystemConfigurationProperties.getString("batch.jdbc.jndiName", null);
+        String jdbcDriver = SystemConfigurationProperties.getString("batch.jdbc.driverClassName", null);
+        String jdbcUrl = SystemConfigurationProperties.getString("batch.jdbc.url", null);
+        String jdbcUser = SystemConfigurationProperties.getString("batch.jdbc.username", null);
+        String jdbcPw = SystemConfigurationProperties.getString("batch.jdbc.password", null);
         try {
             Connection connection;
             if (!StringUtils.isEmpty(jndiPath)) {
@@ -97,8 +94,9 @@ public class ComputeBaseDAO {
     private SessionFactory getSessionFactory() {
         try {
             if (sessionFactory==null) {
-                EntityManager em = Persistence.createEntityManagerFactory("Workstation_pu").createEntityManager();
-                Session session = (Session)em.getDelegate();
+//                EntityManager em = Persistence.createEntityManagerFactory("Workstation_pu").createEntityManager();
+                EntityManager em2 = new Resources().workstationEM;
+                Session session = (Session)workstationEM.getDelegate();
                 sessionFactory = session.getSessionFactory();
             }
             return sessionFactory;
@@ -194,11 +192,10 @@ public class ComputeBaseDAO {
         
         String ownerName = DomainUtils.getNameFromSubjectKey(owner);
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select t from Task t ");
-        hql.append("where t.owner = :owner ");
-        hql.append("and t.taskName = :name ");
-        hql.append("order by t.objectId desc");
-        Query query = session.createQuery(hql.toString());
+        String hql = "select t from Task t " + "where t.owner = :owner " +
+                "and t.taskName = :name " +
+                "order by t.objectId desc";
+        Query query = session.createQuery(hql);
         query.setString("owner", ownerName);
         query.setString("name", taskName);
         return (List<Task>)query.list();
@@ -211,7 +208,7 @@ public class ComputeBaseDAO {
         
         String ownerName = DomainUtils.getNameFromSubjectKey(owner);
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select t from Task t ");
+        StringBuilder hql = new StringBuilder("select t from Task t ");
         hql.append("inner join fetch t.events ");
         hql.append("where t.owner = :owner ");
         if (null!=taskName) {hql.append("and t.taskName = :name ");}
@@ -243,13 +240,12 @@ public class ComputeBaseDAO {
 
         String ownerName = owner.contains(":") ? owner.split(":")[1] : owner;
         Session session = getCurrentSession();
-        StringBuilder search = new StringBuilder("select task.task_id ");
-        search.append("from task join task_event on task.task_id = task_event.task_id ");
-        search.append("where task.task_owner= :ownerName and event_no in ( ");
-        search.append("select max(event_no) as event_no ");
-        search.append("from task_event task_event1 where  task_event1.task_id=task_event.task_id ");
-        search.append("order by task.task_id asc ) and event_type != 'completed' and task_event.event_type!='error' and task_event.event_type!='canceled'");
-        SQLQuery query = session.createSQLQuery(search.toString());
+        String search = "select task.task_id " + "from task join task_event on task.task_id = task_event.task_id " +
+                "where task.task_owner= :ownerName and event_no in ( " +
+                "select max(event_no) as event_no " +
+                "from task_event task_event1 where  task_event1.task_id=task_event.task_id " +
+                "order by task.task_id asc ) and event_type != 'completed' and task_event.event_type!='error' and task_event.event_type!='canceled'";
+        SQLQuery query = session.createSQLQuery(search);
         query.setString("ownerName", ownerName);
 
         int c = 0;
@@ -366,9 +362,7 @@ public class ComputeBaseDAO {
         }
         
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select n from Node n ");
-        hql.append("where n.pathOverride = :pathOverride ");
-        Query query = session.createQuery(hql.toString());
+        Query query = session.createQuery("select n from Node n " + "where n.pathOverride = :pathOverride ");
         query.setString("pathOverride", pathOverride);
         return (FileNode)query.uniqueResult();
     }
@@ -389,12 +383,11 @@ public class ComputeBaseDAO {
         }
         
         try {
-            StringBuilder hql = new StringBuilder();
-            hql.append("update Node n set n.pathOverride = concat(:newPrefix,substring(n.pathOverride, :prefixOffset)) "); 
-            hql.append("where n.pathOverride like :oldPrefix");
-            
+            String hql = "update Node n set n.pathOverride = concat(:newPrefix,substring(n.pathOverride, :prefixOffset)) " +
+                    "where n.pathOverride like :oldPrefix";
+
             final Session currentSession = getCurrentSession();
-            Query query = currentSession.createQuery(hql.toString());
+            Query query = currentSession.createQuery(hql);
             query.setParameter("newPrefix", newPrefix);
             query.setParameter("prefixOffset", oldPrefix.length()+1);
             query.setParameter("oldPrefix", oldPrefix+"%");
@@ -522,11 +515,10 @@ public class ComputeBaseDAO {
         }
         
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select u from User u ");
-        hql.append("left outer join fetch u.groupRelationships gr ");
-        hql.append("left outer join fetch gr.group ");
-        hql.append("where u.name = :name or u.key = :name ");
-        Query query = session.createQuery(hql.toString());
+        String hql = "select u from User u " + "left outer join fetch u.groupRelationships gr " +
+                "left outer join fetch gr.group " +
+                "where u.name = :name or u.key = :name ";
+        Query query = session.createQuery(hql);
         query.setString("name", nameOrKey);
         return (User)query.uniqueResult();
     }
@@ -537,11 +529,10 @@ public class ComputeBaseDAO {
         }
         
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select g from Group g ");
-        hql.append("left outer join fetch g.userRelationships ur ");
-        hql.append("left outer join fetch ur.user ");
-        hql.append("where g.name = :name or g.key = :name ");
-        Query query = session.createQuery(hql.toString());
+        String hql = "select g from Group g " + "left outer join fetch g.userRelationships ur " +
+                "left outer join fetch ur.user " +
+                "where g.name = :name or g.key = :name ";
+        Query query = session.createQuery(hql);
         query.setString("name", nameOrKey);
         return (Group)query.uniqueResult();
     }
@@ -552,9 +543,7 @@ public class ComputeBaseDAO {
         }
         
         Session session = getCurrentSession();
-        StringBuffer hql = new StringBuffer("select s from Subject s ");
-        hql.append("where s.name = :name or s.key = :name ");
-        Query query = session.createQuery(hql.toString());
+        Query query = session.createQuery("select s from Subject s " + "where s.name = :name or s.key = :name ");
         query.setString("name", nameOrKey);
         return (Subject)query.uniqueResult();
     }
@@ -564,16 +553,14 @@ public class ComputeBaseDAO {
         if (log.isTraceEnabled()) {
             log.trace("getGroupKeysForUsernameOrSubjectKey(userKey="+userKey+")");    
         }
-        
-        StringBuffer hql = new StringBuffer();
-        hql.append("select g.key from Group g ");
-        hql.append("join g.userRelationships ur ");
-        hql.append("join ur.user u ");
-        hql.append("where u.name = :userKey or u.key = :userKey ");
-        Query query = getCurrentSession().createQuery(hql.toString());
+
+        String hql = "select g.key from Group g " +
+                "join g.userRelationships ur " +
+                "join ur.user u " +
+                "where u.name = :userKey or u.key = :userKey ";
+        Query query = getCurrentSession().createQuery(hql);
         query.setString("userKey", userKey);
-        List<String> list = query.list();
-        return list;
+        return (List<String>) query.list();
     }
 
     public List<String> getSubjectKeys(String subjectKey) {
@@ -657,12 +644,12 @@ public class ComputeBaseDAO {
             return externalSession;
     }
 
-    public Session openNewExternalSession() {
+    protected Session openNewExternalSession() {
         externalSession = getSessionFactory().openSession();
         return externalSession;
     }
     
-    public void closeExternalSession() {
+    protected void closeExternalSession() {
         if (externalSession!=null) externalSession.close();
         externalSession = null;
     }

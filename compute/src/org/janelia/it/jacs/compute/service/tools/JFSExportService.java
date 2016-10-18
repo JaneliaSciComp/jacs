@@ -35,7 +35,7 @@ public class JFSExportService extends SubmitDrmaaJobService {
     protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         task = ProcessDataHelper.getTask(processData);
-        if (computeDAO == null) {computeDAO = new ComputeDAO(logger);}
+        if (computeDAO == null) {computeDAO = new ComputeDAO();}
         resultFileNode = createResultFileNode();
         // super.init() must be called after the resultFileNode is set or it will throw an Exception
         super.init(processData);

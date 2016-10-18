@@ -42,7 +42,7 @@ public class BlastMultiFastaSplitterService extends LockLessMultiFastaSplitterSe
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             BlastTask blastTask = (BlastTask) ProcessDataHelper.getTask(processData);
-            computeDAO = new ComputeDAO(logger);
+            computeDAO = new ComputeDAO();
             this.resultFileNode = ProcessDataHelper.getResultFileNode(processData);
             File inputFile = getInputFileFromTask(blastTask.getParameter(BlastTask.PARAM_query));
 
@@ -92,7 +92,7 @@ public class BlastMultiFastaSplitterService extends LockLessMultiFastaSplitterSe
         for (String databaseFileNodeIdString : databaseFileNodeIdList) {
             BlastDatabaseFileNode bfn;
             try {
-                bfn = new ComputeDAO(logger).getBlastDatabaseFileNodeById(Long.parseLong(databaseFileNodeIdString));
+                bfn = new ComputeDAO().getBlastDatabaseFileNodeById(Long.parseLong(databaseFileNodeIdString));
             }
             catch (Exception e) {
                 throw new RuntimeException(e);

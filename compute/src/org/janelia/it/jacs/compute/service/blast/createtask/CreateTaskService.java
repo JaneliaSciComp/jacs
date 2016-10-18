@@ -40,7 +40,7 @@ public class CreateTaskService implements IService {
         try {
             Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.processData = processData;
-            computeDAO = new ComputeDAO(logger);
+            computeDAO = new ComputeDAO();
             blastType = (String) processData.getMandatoryItem(BlastProcessDataConstants.BLAST_TYPE);
             jobName = (String) processData.getMandatoryItem(IProcessData.JOB_NAME);
             datasetName = (String) processData.getMandatoryItem(BlastProcessDataConstants.DATA_SET_NAME);

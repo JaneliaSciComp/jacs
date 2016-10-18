@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.vo"
                    default-access="property"
@@ -189,7 +189,7 @@
                   optimistic-lock="false">
                 <key column="value_id"/>
                 <index column="position"/>
-                <element type="string" column="value_element" not-null="true"/>
+                <element type="java.lang.String" column="value_element" not-null="true"/>
             </list>
         </subclass>
 
@@ -206,7 +206,7 @@
                   optimistic-lock="false">
                 <key column="choice_id"/>
                 <index column="choice_position"/>
-                <element type="string" column="choice_element" not-null="true"/>
+                <element type="java.lang.String" column="choice_element" not-null="true"/>
             </list>
             <list name="potentialChoices"
                   table="multi_select_values"
@@ -216,7 +216,7 @@
                   optimistic-lock="false">
                 <key column="value_id"/>
                 <index column="value_position"/>
-                <element type="string" column="value_element" not-null="true"/>
+                <element type="java.lang.String" column="value_element" not-null="true"/>
             </list>
         </subclass>
 

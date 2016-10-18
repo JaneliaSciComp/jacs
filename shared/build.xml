@@ -66,7 +66,7 @@
             <fileset dir="${common.module}/JodaTime/" includes="*.jar"/>
             <fileset dir="${common.module}/Reflections" includes="*.jar"/>
             <fileset dir="${common.module}/Directory/" includes="*.jar"/>
-            <pathelement location="${common.module}/Spring/dom4j-1.6.1.jar"/>
+            <!--<pathelement location="${common.module}/Spring/dom4j-1.6.1.jar"/>-->
             <fileset dir="${common.dir}/Hibernate-5.2.2" includes="hibernate-core-5.2.2.Final.jar"/>
             <fileset dir="${common.dir}/Hibernate-5.2.2" includes="hibernate-jpa-2.1-api-1.0.0.Final.jar"/>
         </path>

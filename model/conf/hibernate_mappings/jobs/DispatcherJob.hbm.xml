@@ -25,7 +25,7 @@
 
 <!DOCTYPE hibernate-mapping PUBLIC
         "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.janelia.it.jacs.model.jobs"
                    default-access="property"
@@ -46,12 +46,12 @@
         <id name="dispatchId" column="dispatch_id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-        <version name="retries" type="integer" column="retries"/>
-        <property name="processDefnName" type="string" column="process_defn_name" not-null="false"/>
-        <property name="status" type="string" column="dispatch_status" not-null="true" />
+        <version name="retries" type="java.lang.Integer" column="retries"/>
+        <property name="processDefnName" type="java.lang.String" column="process_defn_name" not-null="false"/>
+        <property name="status" type="java.lang.String" column="dispatch_status" not-null="true" />
         <property name="dispatchedTaskId" type="java.lang.Long" column="dispatched_task_id" not-null="true" />
-        <property name="dispatchedTaskOwner" type="string" column="dispatched_task_owner" not-null="true" />
-        <property name="dispatchHost" type="string" column="dispatch_host" not-null="false"/>
+        <property name="dispatchedTaskOwner" type="java.lang.String" column="dispatched_task_owner" not-null="true" />
+        <property name="dispatchHost" type="java.lang.String" column="dispatch_host" not-null="false"/>
         <property name="creationDate" type="timestamp" column="creation_date" not-null="true"/>
         <property name="dispatchedDate" type="timestamp" column="dispatched_date" not-null="false"/>
     </class>
@@ -69,12 +69,12 @@
         <id name="dispatchId" column="dispatch_id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-        <version name="retries" type="integer" column="retries"/>
-        <property name="processDefnName" type="string" column="process_defn_name" not-null="false"/>
-        <property name="status" type="string" column="dispatch_status" not-null="true" />
+        <version name="retries" type="java.lang.Integer" column="retries"/>
+        <property name="processDefnName" type="java.lang.String" column="process_defn_name" not-null="false"/>
+        <property name="status" type="java.lang.String" column="dispatch_status" not-null="true" />
         <property name="dispatchedTaskId" type="java.lang.Long" column="dispatched_task_id" not-null="true" />
-        <property name="dispatchedTaskOwner" type="string" column="dispatched_task_owner" not-null="true" />
-        <property name="dispatchHost" type="string" column="dispatch_host" not-null="false"/>
+        <property name="dispatchedTaskOwner" type="java.lang.String" column="dispatched_task_owner" not-null="true" />
+        <property name="dispatchHost" type="java.lang.String" column="dispatch_host" not-null="false"/>
         <property name="creationDate" type="timestamp" column="creation_date" not-null="true"/>
         <property name="dispatchedDate" type="timestamp" column="dispatched_date" not-null="false"/>
     </class>
@@ -90,14 +90,14 @@
            optimistic-lock="version">
 
         <id name="dispatchId" column="dispatch_id" type="java.lang.Long"/>
-        <property name="processDefnName" type="string" column="process_defn_name" not-null="false"/>
-        <property name="status" type="string" column="dispatch_status" not-null="true" />
+        <property name="processDefnName" type="java.lang.String" column="process_defn_name" not-null="false"/>
+        <property name="status" type="java.lang.String" column="dispatch_status" not-null="true" />
         <property name="dispatchedTaskId" type="java.lang.Long" column="dispatched_task_id" not-null="true" />
-        <property name="dispatchedTaskOwner" type="string" column="dispatched_task_owner" not-null="true" />
-        <property name="dispatchHost" type="string" column="dispatch_host" not-null="false"/>
+        <property name="dispatchedTaskOwner" type="java.lang.String" column="dispatched_task_owner" not-null="true" />
+        <property name="dispatchHost" type="java.lang.String" column="dispatch_host" not-null="false"/>
         <property name="creationDate" type="timestamp" column="creation_date" not-null="true"/>
         <property name="dispatchedDate" type="timestamp" column="dispatched_date" not-null="false"/>
-        <property name="retries" type="integer" column="retries"/>
+        <property name="retries" type="java.lang.Integer" column="retries"/>
     </class>
 
 </hibernate-mapping>
