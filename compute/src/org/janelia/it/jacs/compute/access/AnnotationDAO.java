@@ -66,10 +66,7 @@ import com.google.common.collect.Multimap;
 import sun.misc.BASE64Decoder;
 
 public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
-	
-	/** Batch fetch size for JDBC result sets */
-	protected final static int JDBC_FETCH_SIZE = 200;
-	
+
     private static final Map<String, EntityType> entityByName = Collections.synchronizedMap(new HashMap<String, EntityType>());
     private static final Map<String, EntityAttribute> attrByName = Collections.synchronizedMap(new HashMap<String, EntityAttribute>());
 
@@ -147,20 +144,20 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("createNewEntityType(name="+name+")");    
         }
         EntityType entityType = getEntityTypeByName(name);
-    	if (entityType != null) {
-    		return entityType;
-    	}
-    	try {
-	    	entityType = new EntityType();
-	    	entityType.setName(name);
-	        saveOrUpdate(entityType);
+        if (entityType != null) {
+            return entityType;
+        }
+        try {
+            entityType = new EntityType();
+            entityType.setName(name);
+            saveOrUpdate(entityType);
             log.info("Created new EntityType '" + name + "'");
-    		entityByName.put(name, entityType);
-	        return entityType;
-    	}
-    	catch (Exception e) {
-    		throw new DaoException(e);
-    	}
+            entityByName.put(name, entityType);
+            return entityType;
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
     }
 
     public EntityAttribute createNewEntityAttr(String entityTypeName, String attrName) throws ComputeException {
@@ -190,17 +187,17 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         Session session = getCurrentSession();
         EntityAttribute entityAttr = null;
         
-    	try {
-	    	entityAttr = new EntityAttribute();
-	    	entityAttr.setName(attrName);
-	        session.saveOrUpdate(entityAttr);
-    		attrByName.put(attrName, entityAttr);
+        try {
+            entityAttr = new EntityAttribute();
+            entityAttr.setName(attrName);
+            session.saveOrUpdate(entityAttr);
+            attrByName.put(attrName, entityAttr);
             log.info("Created new EntityAttribute '" + attrName + "'");
-    	}
-    	catch (Exception e) {
-    		throw new DaoException(e);
-    	}
-    	
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+        
         return addAttributeToEntityType(entityType, entityAttr);
     }
     
@@ -210,29 +207,29 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("addAttributeToEntityType(entityType="+entityType+",entityAttr="+entityAttr+")");    
         }
         
-    	try {
-    	    Session session = getCurrentSession();
-    		Set<EntityAttribute> attrs = entityType.getAttributes();
-    		if (attrs == null) {
-    			attrs = new HashSet<EntityAttribute>();
-    			entityType.setAttributes(attrs);
-    		}
-    		
-    		for(EntityAttribute currAttr : attrs) {
-    		    if (currAttr.getName().equals(entityAttr.getName())) {
-    		        log.info("EntityAttribute '" + entityAttr.getName() + "' already exists on EntityType '"+entityType.getName()+"'");
-    		        return currAttr;
-    		    }
-    		}
-    		
-    		attrs.add(entityAttr);
-	        session.saveOrUpdate(entityType);
+        try {
+            Session session = getCurrentSession();
+            Set<EntityAttribute> attrs = entityType.getAttributes();
+            if (attrs == null) {
+                attrs = new HashSet<EntityAttribute>();
+                entityType.setAttributes(attrs);
+            }
+            
+            for(EntityAttribute currAttr : attrs) {
+                if (currAttr.getName().equals(entityAttr.getName())) {
+                    log.info("EntityAttribute '" + entityAttr.getName() + "' already exists on EntityType '"+entityType.getName()+"'");
+                    return currAttr;
+                }
+            }
+            
+            attrs.add(entityAttr);
+            session.saveOrUpdate(entityType);
             log.info("Added EntityAttribute '" + entityAttr.getName() + "' to EntityType '"+entityType.getName()+"'");
-	        return entityAttr;
-    	}
-    	catch (Exception e) {
-    		throw new DaoException(e);
-    	}
+            return entityAttr;
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
     }
 
     public void deleteAttribute(String ownerKey, String attributeName) throws DaoException {
@@ -468,11 +465,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("cloneEntityTree(sourceRootId="+sourceRootId+", targetSubjectKey="+targetSubjectKey+", targetRootName="+targetRootName+")");
         }
         
-    	Entity sourceRoot = getEntityById(sourceRootId);    	
-    	if (sourceRoot == null) {
-    		throw new DaoException("Cannot find the source root for cloning: "+sourceRootId);
-    	}
-    	
+        Entity sourceRoot = getEntityById(sourceRootId);        
+        if (sourceRoot == null) {
+            throw new DaoException("Cannot find the source root for cloning: "+sourceRootId);
+        }
+        
         Entity cloned = cloneEntityTree(sourceRoot, targetSubjectKey, targetRootName, clonePermissions, new HashMap<Long,Entity>());
         return cloned;
     }
@@ -490,30 +487,30 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         visited.put(sourceEntity.getId(), clonedEntity);
         
         // Add the entity data 
-    	for(EntityData ed : sourceEntity.getEntityData()) {
-    		
-    		Entity newChildEntity = null;
-    		Entity childEntity = ed.getChildEntity();
-    		if (childEntity != null) {
-    			newChildEntity = cloneEntityTree(childEntity, targetSubjectKey, childEntity.getName(), clonePermissions, visited);	
-    		}
-    		
+        for(EntityData ed : sourceEntity.getEntityData()) {
+            
+            Entity newChildEntity = null;
+            Entity childEntity = ed.getChildEntity();
+            if (childEntity != null) {
+                newChildEntity = cloneEntityTree(childEntity, targetSubjectKey, childEntity.getName(), clonePermissions, visited);    
+            }
+            
             EntityData newEd = clonedEntity.addChildEntity(newChildEntity, ed.getEntityAttrName());
             newEd.setOrderIndex(ed.getOrderIndex());
             newEd.setValue(ed.getValue());
             saveOrUpdate(newEd);
-    	}
+        }
 
         log.trace("cloned "+sourceEntity.getId()+" as "+clonedEntity.getId());
         
         if (clonePermissions) {
             for(EntityActorPermission permission : getFullPermissions(sourceEntity)) {
-            	if (permission.getSubjectKey().equals(targetSubjectKey)) continue; // Don't need to grant permissions to the new owner
-            	grantPermissions(clonedEntity, permission.getSubjectKey(), permission.getPermissions(), false, false);    
+                if (permission.getSubjectKey().equals(targetSubjectKey)) continue; // Don't need to grant permissions to the new owner
+                grantPermissions(clonedEntity, permission.getSubjectKey(), permission.getPermissions(), false, false);    
             }
         }
         
-    	return clonedEntity;
+        return clonedEntity;
     }
     
     private Entity newEntity(String entityTypeName, String name, String subjectKey) {
@@ -722,7 +719,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             hql.append("left outer join e.entityActorPermissions p ");
             hql.append("where e.entityTypeName = :entityTypeName ");
             if (null != subjectKey) {
-            	hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+                hql.append("and (e.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
 
             final Session currentSession = getCurrentSession();
@@ -1014,15 +1011,15 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
 
     public Entity getDefaultWorkspace(String subjectKey) throws DaoException {
-		List<Entity> workspaces = getUserEntitiesByNameAndTypeName(subjectKey, EntityConstants.NAME_DEFAULT_WORKSPACE, EntityConstants.TYPE_WORKSPACE);
-		if (workspaces.size()>1) {
-			throw new DaoException("More than one default workspace exists for "+subjectKey);
-		}
-		else if (workspaces.isEmpty()) {
-			log.warn("No default workspace exists for "+subjectKey);
-			return null;
-		}
-		return workspaces.get(0);
+        List<Entity> workspaces = getUserEntitiesByNameAndTypeName(subjectKey, EntityConstants.NAME_DEFAULT_WORKSPACE, EntityConstants.TYPE_WORKSPACE);
+        if (workspaces.size()>1) {
+            throw new DaoException("More than one default workspace exists for "+subjectKey);
+        }
+        else if (workspaces.isEmpty()) {
+            log.warn("No default workspace exists for "+subjectKey);
+            return null;
+        }
+        return workspaces.get(0);
     }
 
     public EntityData addRootToDefaultWorkspace(String subjectKey, Entity entity) throws DaoException {
@@ -1045,11 +1042,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return addRootToWorkspace(subjectKey, workspace, entity);
     }
     
-	public EntityData addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws DaoException {
-		Entity workspace = getEntityById(workspaceId);
-		Entity entity = getEntityById(entityId);
-		return addRootToWorkspace(subjectKey, workspace, entity);
-	}
+    public EntityData addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws DaoException {
+        Entity workspace = getEntityById(workspaceId);
+        Entity entity = getEntityById(entityId);
+        return addRootToWorkspace(subjectKey, workspace, entity);
+    }
 
     public EntityData createFolderInDefaultWorkspace(String subjectKey, String entityName) throws DaoException {
         if (log.isTraceEnabled()) {
@@ -1063,70 +1060,70 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         return addRootToWorkspace(subjectKey, workspace, entity);
     }
-	
-	public EntityData createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws DaoException {
+    
+    public EntityData createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("createFolderInWorkspace(subjectKey="+subjectKey+", workspaceId="+workspaceId+", entityName="+entityName+")");
         }
         Entity entity = createEntity(subjectKey, EntityConstants.TYPE_FOLDER, entityName);
         saveOrUpdate(entity);
-		Entity workspace = getEntityById(workspaceId);
-		if (workspace==null) {
-			throw new DaoException("No such workspace with id "+workspaceId);
-		}
-		return addRootToWorkspace(subjectKey, workspace, entity);
-	}
+        Entity workspace = getEntityById(workspaceId);
+        if (workspace==null) {
+            throw new DaoException("No such workspace with id "+workspaceId);
+        }
+        return addRootToWorkspace(subjectKey, workspace, entity);
+    }
     
-	public EntityData addRootToWorkspace(String subjectKey, Entity workspace, Entity entity) throws DaoException {
+    public EntityData addRootToWorkspace(String subjectKey, Entity workspace, Entity entity) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("createFolderInWorkspace(subjectKey="+subjectKey+", workspace.id="+workspace.getId()+", entity.id="+entity.getId()+")");
         }
-		// Find the appropriate place to insert this root, and renumber everything while we're at it.
+        // Find the appropriate place to insert this root, and renumber everything while we're at it.
         Boolean ingroup = false;
-		Integer insertionIndex = null;
-		int index = 0;
-		
-		loadLazyEntity(subjectKey, workspace, false);
-		
-		for(EntityData ed : workspace.getOrderedEntityData()) {
-			if (ed.getChildEntity()==null) continue;
-			String childOwner = ed.getChildEntity().getOwnerKey();
+        Integer insertionIndex = null;
+        int index = 0;
+        
+        loadLazyEntity(subjectKey, workspace, false);
+        
+        for(EntityData ed : workspace.getOrderedEntityData()) {
+            if (ed.getChildEntity()==null) continue;
+            String childOwner = ed.getChildEntity().getOwnerKey();
 
-			if (ingroup!=null) {
-				if (ingroup) {
-					// We're looking at the correct group, when it ends, we'll insert our entity
-					if (!childOwner.equals(entity.getOwnerKey())) {
-						// Insert the root after the last entity with the same owner
-						insertionIndex = index;
-						index++;
-						// Stop looking
-						ingroup = null;
-					}
-				}
-				else {
-					if (childOwner.equals(entity.getOwnerKey())) {
-						// Now we're looking at the correct group, just need to wait until the end
-						ingroup = true;
-					}
-				}
-			}
-			
-			// Ensure that all indexes are correct
-			if (ed.getOrderIndex()==null || ed.getOrderIndex()!=index) {
-				ed.setOrderIndex(index);
-		        ed.setUpdatedDate(new Date());
-				saveOrUpdate(ed);
-			}
-			
-			index++;
-		}
-		if (insertionIndex==null) {
-			// No matching entities, so add it to the end
-			insertionIndex = index;
-		}
-		return addEntityToParent(workspace, entity, insertionIndex, EntityConstants.ATTRIBUTE_ENTITY);
-	}
-	
+            if (ingroup!=null) {
+                if (ingroup) {
+                    // We're looking at the correct group, when it ends, we'll insert our entity
+                    if (!childOwner.equals(entity.getOwnerKey())) {
+                        // Insert the root after the last entity with the same owner
+                        insertionIndex = index;
+                        index++;
+                        // Stop looking
+                        ingroup = null;
+                    }
+                }
+                else {
+                    if (childOwner.equals(entity.getOwnerKey())) {
+                        // Now we're looking at the correct group, just need to wait until the end
+                        ingroup = true;
+                    }
+                }
+            }
+            
+            // Ensure that all indexes are correct
+            if (ed.getOrderIndex()==null || ed.getOrderIndex()!=index) {
+                ed.setOrderIndex(index);
+                ed.setUpdatedDate(new Date());
+                saveOrUpdate(ed);
+            }
+            
+            index++;
+        }
+        if (insertionIndex==null) {
+            // No matching entities, so add it to the end
+            insertionIndex = index;
+        }
+        return addEntityToParent(workspace, entity, insertionIndex, EntityConstants.ATTRIBUTE_ENTITY);
+    }
+    
     public Entity getCommonRootFolderByName(String subjectKey, String folderName, boolean createIfNecessary) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("getCommonRootFolderByName(subjectKey="+subjectKey+", folderName="+folderName+", createIfNecessary="+createIfNecessary+")");
@@ -1307,7 +1304,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
         if (visited.contains(entityId)) {
             // We've already been here, don't need to search it again
-        	return null;
+            return null;
         }
         visited.add(entityId);
         
@@ -2029,7 +2026,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         if (entity==null) return null;
         if (visited.containsKey(entity.getId())) {
-        	return visited.get(entity.getId());
+            return visited.get(entity.getId());
         }
         visited.put(entity.getId(), entity);
         
@@ -2084,7 +2081,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("addEntityToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+", value="+value+")");
         }
         if (parent.getId().equals(entity.getId())) {
-        	throw new IllegalArgumentException("Cannot add entity to itself: "+parent.getName());
+            throw new IllegalArgumentException("Cannot add entity to itself: "+parent.getName());
         }
         if (attrName==null) throw new DaoException("Error adding entity child with null attribute name");
         EntityData ed = parent.addChildEntity(entity, attrName);
@@ -2117,7 +2114,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("rapidlyAddNeuronToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+")");
         }
         if (parent.getId() != null  &&  parent.getId().equals(entity.getId())) {
-        	throw new IllegalArgumentException("Cannot add entity to itself: "+parent.getName());
+            throw new IllegalArgumentException("Cannot add entity to itself: "+parent.getName());
         }
         if (attrName==null) throw new DaoException("Error adding entity child with null attribute name");
 
@@ -2151,8 +2148,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
         Set<SubjectRelationship> groupUsers = null;
         if (parent.getOwnerKey().startsWith("group:")) {
-			Group group = getGroupByNameOrKey(parent.getOwnerKey());
-			groupUsers = group.getUserRelationships();
+            Group group = getGroupByNameOrKey(parent.getOwnerKey());
+            groupUsers = group.getUserRelationships();
         }
         
         for (Long childId : childrenIds) {
@@ -2196,30 +2193,30 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
      */
     private void workspaceCheck(Entity parent, Entity entity, Set<SubjectRelationship> groupUsers) throws DaoException {
         if (parent.getEntityTypeName().equals(EntityConstants.TYPE_WORKSPACE)) {
-        	
-        	// Making something a child of a workspace makes it a common root
-        	if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)==null) {
-        		if (isEntityTypeSupportsAttribute(entity.getEntityTypeName(), EntityConstants.ATTRIBUTE_COMMON_ROOT)) {
-	        		EntityData crEd = newData(entity, EntityConstants.ATTRIBUTE_COMMON_ROOT, entity.getOwnerKey());
-	        		crEd.setValue(EntityConstants.ATTRIBUTE_COMMON_ROOT);
-	        		entity.getEntityData().add(crEd);
-	            	saveOrUpdate(crEd);
-        		}
-        	}
-        	
-        	// "Fan out on write" for group workspaces
-        	if (parent.getOwnerKey().startsWith("group:")) {
-    			log.info("Fan out workspace write for "+parent.getOwnerKey());
-        		if (groupUsers==null) {
-        			Group group = getGroupByNameOrKey(parent.getOwnerKey());
-        			groupUsers = group.getUserRelationships();
-        		}
-        		for(SubjectRelationship rel : groupUsers) {
-        			String subjectKey = rel.getUser().getKey();
-        			log.info("Adding '"+entity.getName()+"' to default workspace for "+subjectKey);
-        			addRootToDefaultWorkspace(subjectKey, entity);
-        		}
-        	}
+            
+            // Making something a child of a workspace makes it a common root
+            if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)==null) {
+                if (isEntityTypeSupportsAttribute(entity.getEntityTypeName(), EntityConstants.ATTRIBUTE_COMMON_ROOT)) {
+                    EntityData crEd = newData(entity, EntityConstants.ATTRIBUTE_COMMON_ROOT, entity.getOwnerKey());
+                    crEd.setValue(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+                    entity.getEntityData().add(crEd);
+                    saveOrUpdate(crEd);
+                }
+            }
+            
+            // "Fan out on write" for group workspaces
+            if (parent.getOwnerKey().startsWith("group:")) {
+                log.info("Fan out workspace write for "+parent.getOwnerKey());
+                if (groupUsers==null) {
+                    Group group = getGroupByNameOrKey(parent.getOwnerKey());
+                    groupUsers = group.getUserRelationships();
+                }
+                for(SubjectRelationship rel : groupUsers) {
+                    String subjectKey = rel.getUser().getKey();
+                    log.info("Adding '"+entity.getName()+"' to default workspace for "+subjectKey);
+                    addRootToDefaultWorkspace(subjectKey, entity);
+                }
+            }
         }
     }
     
@@ -3019,7 +3016,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         Entity report = EntityUtils.findChildWithName(root, categoryName);
         
         if (report==null) {
-        	log.warn("Could not find child '"+categoryName+"' in ontology '"+ontologyName+"'");
+            log.warn("Could not find child '"+categoryName+"' in ontology '"+ontologyName+"'");
         }
         
         return report;
@@ -3173,20 +3170,20 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             hql.append("join targetEd.parentEntity ");
             hql.append("left outer join fetch targetEd.parentEntity.entityActorPermissions pf ");
             hql.append("left outer join targetEd.parentEntity.entityActorPermissions p ");
-            hql.append("where targetEd.entityAttrName = :attrName ");	
+            hql.append("where targetEd.entityAttrName = :attrName ");    
             hql.append("and childEd.childEntity.id is not null ");
             hql.append("and cast(childEd.childEntity.id as string) = targetEd.value ");
             hql.append("and childEd.parentEntity.id = :entityId ");
             if (null != subjectKey) {
-            	hql.append("and (targetEd.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+                hql.append("and (targetEd.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
             
             Query query = session.createQuery(hql.toString());
             query.setString("attrName", EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-        	query.setLong("entityId", entityId);
+            query.setLong("entityId", entityId);
             if (null != subjectKey) {
                 List<String> subjectKeyList = getSubjectKeys(subjectKey);
-	            query.setParameterList("subjectKeyList", subjectKeyList);
+                query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
             return filter(query.list());
@@ -3197,13 +3194,13 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     public List<Entity> getAnnotationsByEntityId(String subjectKey, Long entityId) throws DaoException {
-    	if (log.isTraceEnabled()) {
-    		log.trace("getAnnotationsByEntityId(subjectKey="+subjectKey+", entityId="+entityId+")");
-    	}
-    	
-    	List<Long> entityIds = new ArrayList<Long>();
-    	entityIds.add(entityId);
-    	return filter(getAnnotationsByEntityId(subjectKey, entityIds));
+        if (log.isTraceEnabled()) {
+            log.trace("getAnnotationsByEntityId(subjectKey="+subjectKey+", entityId="+entityId+")");
+        }
+        
+        List<Long> entityIds = new ArrayList<Long>();
+        entityIds.add(entityId);
+        return filter(getAnnotationsByEntityId(subjectKey, entityIds));
     }
     
     public List<Entity> getAnnotationsByEntityId(String subjectKey, List<Long> entityIds) throws DaoException {
@@ -3212,14 +3209,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         try {
-        	if (entityIds.isEmpty()) {
-        		return new ArrayList<Entity>();
-        	}
+            if (entityIds.isEmpty()) {
+                return new ArrayList<Entity>();
+            }
 
             List<String> entityIdStrs = new ArrayList<String>();
-        	for(Long id : entityIds) {
-        		entityIdStrs.add(""+id);
-        	}
+            for(Long id : entityIds) {
+                entityIdStrs.add(""+id);
+            }
             
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
@@ -3229,16 +3226,16 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             hql.append("where ed.entityAttrName = :attrName ");
             hql.append("and ed.value in (:entityIds) ");
             if (subjectKey!=null) {
-            	hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+                hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
             hql.append("order by ed.parentEntity.id ");
             
             Query query = session.createQuery(hql.toString());
             query.setString("attrName", EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-        	query.setParameterList("entityIds", entityIdStrs);
+            query.setParameterList("entityIds", entityIdStrs);
             if (subjectKey!=null) {
                 List<String> subjectKeyList = getSubjectKeys(subjectKey);
-	            query.setParameterList("subjectKeyList", subjectKeyList);
+                query.setParameterList("subjectKeyList", subjectKeyList);
             }
             
             return filter(query.list());
@@ -3315,7 +3312,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
 
-	public List<Entity> getAnnotationsForSession(String subjectKey, long sessionId) throws DaoException {
+    public List<Entity> getAnnotationsForSession(String subjectKey, long sessionId) throws DaoException {
 
         if (log.isTraceEnabled()) {
             log.trace("getAnnotationsForSession(subjectKey="+subjectKey+",sessionId="+sessionId+")");
@@ -3325,9 +3322,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (task == null) 
             throw new DaoException("Session not found");
         
-		if (!(task instanceof AnnotationSessionTask)) 
-			throw new DaoException("Task is not an annotation session");
-		
+        if (!(task instanceof AnnotationSessionTask)) 
+            throw new DaoException("Task is not an annotation session");
+        
         try {
             Session session = getCurrentSession();
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
@@ -3335,17 +3332,17 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             hql.append("left outer join fetch ed.parentEntity.entityActorPermissions pf ");
             hql.append("left outer join ed.parentEntity.entityActorPermissions p ");
             hql.append("where ed.entityAttrName = :attrName ");
-    		hql.append("and ed.value = :sessionId ");
+            hql.append("and ed.value = :sessionId ");
             if (subjectKey!=null) {
-            	hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+                hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
             }
-    		hql.append("order by ed.parentEntity.id ");
+            hql.append("order by ed.parentEntity.id ");
             Query query = session.createQuery(hql.toString());
             query.setString("attrName", EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
             query.setString("sessionId", ""+sessionId);
             if (subjectKey!=null) {
                 List<String> subjectKeyList = getSubjectKeys(subjectKey);
-	            query.setParameterList("subjectKeyList", subjectKeyList);
+                query.setParameterList("subjectKeyList", subjectKeyList);
             }
             // TODO: check userLogin if the session is private
             return filter(query.list());
@@ -3353,7 +3350,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         catch (Exception e) {
             throw new DaoException(e);
         }
-	}
+    }
     
     public List<Entity> getEntitiesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException {
 
@@ -3365,22 +3362,22 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (task == null) 
             throw new DaoException("Session not found");
         
-		if (!(task instanceof AnnotationSessionTask)) 
-			throw new DaoException("Task is not an annotation session");
-    	
+        if (!(task instanceof AnnotationSessionTask)) 
+            throw new DaoException("Task is not an annotation session");
+        
         String entityIds = task.getParameter(AnnotationSessionTask.PARAM_annotationTargets);
         if (entityIds == null || "".equals(entityIds)) {
-        	return new ArrayList<Entity>();
+            return new ArrayList<Entity>();
         }
         else {
-        	List<Entity> entities = getEntitiesInList(subjectKey, entityIds);	
-        	for(Entity entity : entities) {
-        		loadLazyEntity(entity.getOwnerKey(), entity, true);
-        	}
-        	return filter(entities);
+            List<Entity> entities = getEntitiesInList(subjectKey, entityIds);    
+            for(Entity entity : entities) {
+                loadLazyEntity(entity.getOwnerKey(), entity, true);
+            }
+            return filter(entities);
         }
     }
-	
+    
     public List<Entity> getCategoriesForAnnotationSession(String subjectKey, long sessionId) throws ComputeException {
 
         if (log.isTraceEnabled()) {
@@ -3391,15 +3388,15 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (task == null) 
             throw new DaoException("Session not found");
         
-		if (!(task instanceof AnnotationSessionTask)) 
-			throw new DaoException("Task is not an annotation session");
-    	
+        if (!(task instanceof AnnotationSessionTask)) 
+            throw new DaoException("Task is not an annotation session");
+        
         String entityIds = task.getParameter(AnnotationSessionTask.PARAM_annotationCategories);
         if (entityIds == null || "".equals(entityIds)) {
-        	return new ArrayList<Entity>();
+            return new ArrayList<Entity>();
         }
         else {
-        	return filter(getEntitiesInList(subjectKey, entityIds));	
+            return filter(getEntitiesInList(subjectKey, entityIds));    
         }
     }
 
@@ -3413,20 +3410,20 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (task == null) 
             throw new DaoException("Session not found");
         
-		if (!(task instanceof AnnotationSessionTask)) 
-			throw new DaoException("Task is not an annotation session");
+        if (!(task instanceof AnnotationSessionTask)) 
+            throw new DaoException("Task is not an annotation session");
         
         Set<Long> completedEntityIds = new HashSet<Long>();
         String entityIds = task.getParameter(AnnotationSessionTask.PARAM_completedTargets);
         if (entityIds == null || "".equals(entityIds)) return completedEntityIds;
         
         for(String id : entityIds.split("\\s*,\\s*")) {
-			try {
-				completedEntityIds.add(Long.parseLong(id));
-			} 
-			catch (NumberFormatException e) {
-				log.warn("Error parsing id in AnnotationSessionTask.PARAM_completedTargets: "+id,e);
-			}
+            try {
+                completedEntityIds.add(Long.parseLong(id));
+            } 
+            catch (NumberFormatException e) {
+                log.warn("Error parsing id in AnnotationSessionTask.PARAM_completedTargets: "+id,e);
+            }
         }
         
         return completedEntityIds;
@@ -3437,22 +3434,22 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
      * @param sessionId
      * @throws ComputeException
      */
-	private List<Entity> updateAnnotationSession(long sessionId) throws ComputeException {
+    private List<Entity> updateAnnotationSession(long sessionId) throws ComputeException {
 
         if (log.isTraceEnabled()) {
             log.trace("updateAnnotationSession(sessionId="+sessionId+")");
         }
         
-		Task task = getTaskById(sessionId);
+        Task task = getTaskById(sessionId);
         if (task == null) 
             throw new DaoException("Session not found");
         
-		if (!(task instanceof AnnotationSessionTask)) 
-			throw new DaoException("Task is not an annotation session");
-		
-		List<Entity> categories = getCategoriesForAnnotationSession(task.getOwner(), sessionId);
-		List<Entity> annotations = getAnnotationsForSession(task.getOwner(), sessionId);
-	
+        if (!(task instanceof AnnotationSessionTask)) 
+            throw new DaoException("Task is not an annotation session");
+        
+        List<Entity> categories = getCategoriesForAnnotationSession(task.getOwner(), sessionId);
+        List<Entity> annotations = getAnnotationsForSession(task.getOwner(), sessionId);
+    
         Map<String, List<Entity>> map = new HashMap<String, List<Entity>>();
         for (Entity annotation : annotations) {
             EntityData ed = annotation.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
@@ -3465,86 +3462,86 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             }
             entityAnnots.add(annotation);
         }
-	    
+        
         Set<String> completed = new HashSet<String>();
         
         for(String entityId : map.keySet()) {
-        	List<Entity> entityAnnotations = map.get(entityId);
-        	
-        	Set<Long> termIds = new HashSet<Long>();
+            List<Entity> entityAnnotations = map.get(entityId);
+            
+            Set<Long> termIds = new HashSet<Long>();
 
-			for(Entity annotation : entityAnnotations) {
-				EntityData keyTermED = annotation.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
-				if (keyTermED==null) continue;
-				Entity keyTerm = keyTermED.getChildEntity();
-				if (keyTerm==null) continue;
-				Long termId = keyTerm.getId();
-    			String termType = keyTerm.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
-				
-				if ("Tag".equals(termType)) {
-					Entity parent = null;
-					for(Entity p : getParentEntities(null, termId)) {
-						String parentTypeName = p.getEntityTypeName();
-						if (parentTypeName.equals(EntityConstants.TYPE_ONTOLOGY_ELEMENT) 
-								|| parentTypeName.equals(EntityConstants.TYPE_ONTOLOGY_ROOT)) {
-							parent = p;
-							break;
-						}
-					}
-					if (parent != null) termId = parent.getId();
-				}
-				
-				termIds.add(termId);
-			}
-        	
-        	
-        	// Ensure this entity is annotated with a term in each category
-        	int c = 0;
-    		for(Entity category : categories) {
-				if (termIds.contains(category.getId())) {
-					c++;
-				}
-    		}	
-    		
-    		if (c == categories.size()) {
-    			completed.add(entityId);
-    		}
+            for(Entity annotation : entityAnnotations) {
+                EntityData keyTermED = annotation.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+                if (keyTermED==null) continue;
+                Entity keyTerm = keyTermED.getChildEntity();
+                if (keyTerm==null) continue;
+                Long termId = keyTerm.getId();
+                String termType = keyTerm.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
+                
+                if ("Tag".equals(termType)) {
+                    Entity parent = null;
+                    for(Entity p : getParentEntities(null, termId)) {
+                        String parentTypeName = p.getEntityTypeName();
+                        if (parentTypeName.equals(EntityConstants.TYPE_ONTOLOGY_ELEMENT) 
+                                || parentTypeName.equals(EntityConstants.TYPE_ONTOLOGY_ROOT)) {
+                            parent = p;
+                            break;
+                        }
+                    }
+                    if (parent != null) termId = parent.getId();
+                }
+                
+                termIds.add(termId);
+            }
+            
+            
+            // Ensure this entity is annotated with a term in each category
+            int c = 0;
+            for(Entity category : categories) {
+                if (termIds.contains(category.getId())) {
+                    c++;
+                }
+            }    
+            
+            if (c == categories.size()) {
+                completed.add(entityId);
+            }
         }
         
         StringBuffer buf = new StringBuffer();
         for(String entityId : completed) {
-        	if (buf.length()>0) buf.append(",");
-        	buf.append(entityId);
+            if (buf.length()>0) buf.append(",");
+            buf.append(entityId);
         }
-		
+        
         task.setParameter(AnnotationSessionTask.PARAM_completedTargets, buf.toString());
         saveOrUpdate(task);
         
         return annotations;
-	}
+    }
 
-	/**
-	 * Removes all annotations in the given session and then returns them.
-	 * @param subjectKey
-	 * @param sessionId
-	 * @return
-	 * @throws DaoException
-	 */
+    /**
+     * Removes all annotations in the given session and then returns them.
+     * @param subjectKey
+     * @param sessionId
+     * @return
+     * @throws DaoException
+     */
     public List<Entity> removeAllOntologyAnnotationsForSession(String subjectKey, long sessionId) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("removeAllOntologyAnnotationsForSession(subjectKey="+subjectKey+", sessionId="+sessionId+")");
         }
 
         try {
-        	List<Entity> annotations = getAnnotationsForSession(subjectKey, sessionId);
+            List<Entity> annotations = getAnnotationsForSession(subjectKey, sessionId);
             for(Object o : annotations) {
                 Entity entity = (Entity)o;
                 if (!entity.getOwnerKey().equals(subjectKey)) {
-                	log.info("Cannot remove annotation "+entity.getId()+" not owned by "+subjectKey);
+                    log.info("Cannot remove annotation "+entity.getId()+" not owned by "+subjectKey);
                 }
                 else {
-                	log.info("Removing annotation "+entity.getId());
-                	genericDelete(entity);	
+                    log.info("Removing annotation "+entity.getId());
+                    genericDelete(entity);    
                 }
             }
             // Notify the session 

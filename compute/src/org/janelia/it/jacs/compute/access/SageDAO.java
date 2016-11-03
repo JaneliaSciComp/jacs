@@ -1,9 +1,7 @@
-
 package org.janelia.it.jacs.compute.access;
 
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,27 +12,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
+import javax.annotation.Resource;
 import javax.persistence.EntityManager;
-import javax.persistence.Persistence;
-import javax.rmi.PortableRemoteObject;
 import javax.sql.DataSource;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
-import org.hibernate.Query;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.compute.service.domain.SageArtifactExportService;
 import org.janelia.it.jacs.model.sage.CvTerm;
@@ -42,112 +33,31 @@ import org.janelia.it.jacs.model.sage.Experiment;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
 import org.janelia.it.jacs.model.sage.Line;
-import org.janelia.it.jacs.model.sage.Observation;
 import org.janelia.it.jacs.model.sage.SageSession;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.utils.ISO8601Utils;
-import org.janelia.it.jacs.shared.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple JDBC access to the Sage database.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SageDAO {
+public class SageDAO extends AbstractBaseDAO {
+
+    private static Logger LOG = LoggerFactory.getLogger(SageDAO.class);
 
     public static final String IMAGE_PROP_LINE_TERM = "image_query_line";
     public static final String LINE_PROP_LINE_TERM = "line_query_line";
 
-    private final String jndiPath = SystemConfigurationProperties.getString("sage.jdbc.jndiName", null);
-    private final String jdbcDriver = SystemConfigurationProperties.getString("sage.jdbc.driverClassName", null);
-    private final String jdbcUrl = SystemConfigurationProperties.getString("sage.jdbc.url", null);
-    private final String jdbcUser = SystemConfigurationProperties.getString("sage.jdbc.username", null);
-    private final String jdbcPw = SystemConfigurationProperties.getString("sage.jdbc.password", null);
+    @Resource(mappedName = "java://Sage_DataSource")
+    private DataSource dataSource;
 
-    protected Logger log;
-    protected SessionFactory sessionFactory;
-    protected Session externalSession;
-    
-    public Connection getJdbcConnection() throws DaoException {
-        Connection connection;
-        try {
-            if (!StringUtils.isEmpty(jndiPath)) {
-                log.debug("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
-                Context ctx = new InitialContext();
-                DataSource ds = (DataSource) PortableRemoteObject.narrow(ctx.lookup(jndiPath), DataSource.class);
-                connection = ds.getConnection();
-            } else {
-                log.debug("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
-                Class.forName(jdbcDriver);
-                connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
-            }
-            connection.setAutoCommit(false);
-        } catch (Exception e) {
-            throw new DaoException(e);
-        }
-        return connection;
+    public SageDAO(EntityManager entityManager) {
+        super(entityManager);
     }
-
-    public SageDAO(Logger log) {
-        this.log = log;
-    }
-
-    private SessionFactory getSessionFactory() {
-        try {
-            if (sessionFactory==null) {
-                EntityManager em = Persistence.createEntityManagerFactory("Sage_pu").createEntityManager();
-                Session session = (Session)em.getDelegate();
-                sessionFactory = session.getSessionFactory();
-            }
-            return sessionFactory;
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Session getCurrentSession() {
-        if (externalSession == null) {
-            return getSessionFactory().getCurrentSession();
-        }
-        else {
-            return externalSession;
-        }
-    }
-
-    public Session getSession() {
-        return getCurrentSession();
-    }
-
-//    /**
-//     * Returns all the images in a given image family with a null data set, with their properties as columns.
-//     * You can get the column names by calling getColumnNames() on the returned ResultSetIterator object.
-//     * The client must call close() on the returned iterator when finished with it.
-//     * @return Iterator over the JDBC result set.
-//     * @throws DaoException
-//     */
-//    public ResultSetIterator getImagesByFamily(String sageImageFamily) throws DaoException {
-//
-//        Connection connection = null;
-//        PreparedStatement pStatement = null;
-//        ResultSet resultSet = null;
-//
-//        try {
-//            final String sql = "select * from image_data_mv where family=? and data_set is null and display=true order by slide_code, name";
-//            connection = getJdbcConnection();
-//            pStatement = connection.prepareStatement(sql);
-//            pStatement.setString(1, sageImageFamily);
-//            pStatement.setFetchSize(Integer.MIN_VALUE);
-//            resultSet = pStatement.executeQuery();
-//
-//        } catch (SQLException e) {
-//            ResultSetIterator.close(resultSet, pStatement, connection, log);
-//            throw new DaoException("Error querying SAGE", e);
-//        }
-//
-//        return new ResultSetIterator(connection, pStatement, resultSet);
-//    }
 
     /**
      * Given an lsm name, get its representative slide image, without using a materialized view.  We want
@@ -159,37 +69,6 @@ public class SageDAO {
      */
     public SlideImage getSlideImageByLSMName(String lsmName) throws DaoException {
         return getSlideImage(SLIDE_IMAGE_BY_LSMNAME_SQL, lsmName);
-    }
-
-//    public SlideImage getSlideImageByDatasetAndLSMName(String datasetName, String lsmName) throws DaoException {
-//
-//        String sql = "select " +
-//                COMMON_IMAGE_VW_ATTR + "," +
-//                "line_vw.lab as image_lab_name " +
-//                "from image_data_mv as image_vw " +
-//                "join image image_t on image_t.id = image_vw.id " +
-//                "join line_vw on line_vw.id = image_t.line_id " +
-//                "where image_vw.name = ? and image_vw.data_set = ?";
-//        log.debug("getSlideImageByDatasetAndLSMName: " + sql + "(" + lsmName + ")");
-//        return getSlideImage(sql, lsmName, datasetName);
-//    }
-
-    /**
-     * Retrieve the Sage image by the LSM path
-     * @param lsmName
-     * @return
-     */
-    public SlideImage getSlideImageByOwnerAndLSMName(String lsmName) throws DaoException {
-
-        String sql = "select " +
-                    COMMON_IMAGE_VW_ATTR + "," +
-                    "line_vw.lab as image_lab_name " +
-                    "from image_vw " +
-                    "join image image_t on image_t.id = image_vw.id " +
-                    "join line_vw on line_vw.id = image_t.line_id " +
-                    "where image_vw.name = ? ";
-        log.debug("GetSlideImageByOwnerAndLSMName: " + sql + "(" + lsmName + ")");
-        return getSlideImage(sql, lsmName);
     }
 
     /**
@@ -205,7 +84,7 @@ public class SageDAO {
         ResultSet resultSet = null;
 
         try {
-            connection = getJdbcConnection();
+            connection = dataSource.getConnection();
             final List<String> propertyTypeNames = getImagePropertyTypesByDataSet(dataSetName, connection);
             final String sql = buildImagePropertySqlForPropertyList(propertyTypeNames);
 
@@ -216,7 +95,7 @@ public class SageDAO {
             resultSet = pStatement.executeQuery();
 
         } catch (SQLException e) {
-            ResultSetIterator.close(resultSet, pStatement, connection, log);
+            ResultSetIterator.close(resultSet, pStatement, connection);
             throw new DaoException("Error querying SAGE", e);
         }
 
@@ -236,7 +115,7 @@ public class SageDAO {
         ResultSet resultSet = null;
 
         try {
-            connection = getJdbcConnection();
+            connection = dataSource.getConnection();
             final List<String> propertyTypeNames = getLinePropertyTypes(connection);
             final String sql = buildLinePropertySql(propertyTypeNames);
 
@@ -245,9 +124,8 @@ public class SageDAO {
 
             resultSet = pStatement.executeQuery();
 
-        }
-        catch (SQLException e) {
-            ResultSetIterator.close(resultSet, pStatement, connection, log);
+        } catch (SQLException e) {
+            ResultSetIterator.close(resultSet, pStatement, connection);
             throw new DaoException("Error querying SAGE", e);
         }
 
@@ -292,12 +170,12 @@ public class SageDAO {
                     Node definitionNode = termElement.selectSingleNode("definition");
 
                     if (nameNode==null) {
-                        log.warn("Term with no name encountered in "+ cv);
+                        LOG.warn("Term with no name encountered in "+ cv);
                         continue;
                     }
 
                     if (dataTypeNode==null) {
-                        log.warn("Term with no type (name="+nameNode.getText()+") encountered in "+ cv);
+                        LOG.warn("Term with no type (name="+nameNode.getText()+") encountered in "+ cv);
                         continue;
                     }
                     // todo this traversal assumes all items with a name belong to the same cv passed in.  This is not the case as
@@ -311,11 +189,10 @@ public class SageDAO {
                     map.put(st.getKey(),st);
                 }
                 else {
-                    log.warn("Expecting <term>, got "+o);
+                    LOG.warn("Expecting <term>, got "+o);
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new DaoException("Error querying Sage Web Service", e);
         }
 
@@ -323,104 +200,73 @@ public class SageDAO {
     }
 
     public CvTerm getCvTermByName(String cvName, String termName) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getCvTermByName(cvName="+cvName+", termName="+termName+")");    
-        }
-        
-        Session session = getCurrentSession();
-        Query query = session.createQuery("select term from CvTerm term " +
-                                          "join term.cv cv " +
-                                          "where cv.name = :cvName " +
-                                          "and (term.name = :termName or term.displayName = :displayName) " + 
-                                          "order by term.id ");
-        query.setString("cvName", cvName);
-        query.setString("termName", termName);
-        query.setString("displayName", termName);
-        List<CvTerm> list = query.list();
-        if (list.isEmpty()) return null;
-        // Because of a lack of constraints, SAGE could contain duplicate CV terms, so we assume the first one is best.
-        return list.get(0);
+        LOG.trace("getCvTermByName(cvName="+cvName+", termName="+termName+")");
+        String hql =
+                "select term from CvTerm term " +
+                "join term.cv cv " +
+                "where cv.name = :cvName " +
+                "and (term.name = :termName or term.displayName = :displayName) " +
+                "order by term.id ";
+        return findFirst(hql, 
+                ImmutableMap.<String, Object>of(
+                        "cvName", cvName,
+                        "termName", termName,
+                        "displayName", termName),
+                CvTerm.class);
     }
 
     public Line getLineByName(String name) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getLineIdByName(name="+name+")");    
-        }
-        
-        Session session = getCurrentSession();
-        Query query = session.createQuery("select line from Line line where line.name = :name ");
-        query.setString("name", name);
-        return (Line)query.uniqueResult();
+        LOG.trace("getLineIdByName(name="+name+")");
+        String hql = "select line from Line line where line.name = :name ";
+        return getAtMostOneResult(prepareQuery(hql,
+                ImmutableMap.<String, Object>of(
+                        "name", name),
+                Line.class));
     }
 
     public Image getImageByName(String imageName) {
-        if (log.isTraceEnabled()) {
-            log.trace("getImageByName(imageName="+imageName+")");    
-        }
-        Session session = getCurrentSession();
-        Query query = session.createQuery("select image from Image image where image.name = :name ");
-        query.setString("name", imageName);
-        return (Image)query.uniqueResult();
-    }
-
-    public Image getImageByNameLike(String imageName) {
-        if (log.isTraceEnabled()) {
-            log.trace("getImageByName(imageName="+imageName+")");    
-        }
-        Session session = getCurrentSession();
-        Query query = session.createQuery("select image from Image image where image.name like :name ");
-        query.setString("name", imageName);
-        return (Image)query.uniqueResult();
+        LOG.trace("getImageByName(imageName="+imageName+")");
+        String hql = "select image from Image image where image.name = :name ";
+        return getAtMostOneResult(prepareQuery(hql,
+                ImmutableMap.<String, Object>of(
+                        "name", imageName),
+                Image.class));
     }
     
     public SecondaryImage getSecondaryImageByName(String imageName) {
-        if (log.isTraceEnabled()) {
-            log.trace("getSecondaryImageByName(imageName="+imageName+")");    
-        }
-        Session session = getCurrentSession();
-        Query query = session.createQuery("select image from SecondaryImage image where image.name = :name ");
-        query.setString("name", imageName);
-        return (SecondaryImage)query.uniqueResult();
+        LOG.trace("getSecondaryImageByName(imageName="+imageName+")");
+        String hql = "select image from SecondaryImage image where image.name = :name ";
+        return getAtMostOneResult(prepareQuery(hql,
+                ImmutableMap.<String, Object>of(
+                        "name", imageName),
+                SecondaryImage.class));
     }
 
     public Image getImage(Integer id) {
-        if (log.isTraceEnabled()) {
-            log.trace("getImages(id="+id+")");    
-        }
-        Session session = getCurrentSession();
-        Query query = session.createQuery("select image from Image image where image.id = :id ");
-        query.setInteger("id", id);
-        return (Image)query.uniqueResult();
+        LOG.trace("getImage(id="+id+")");
+        return findByNumericId(id, Image.class);
     }
     
-    @SuppressWarnings("unchecked")
-	public List<Image> getImages(Collection<Integer> ids) {
-        if (log.isTraceEnabled()) {
-            log.trace("getImages(ids.size="+ids.size()+")");    
-        }
+    public List<Image> getImages(Collection<Integer> ids) {
+        LOG.trace("getImages(ids.size="+ids.size()+")");
         if (ids.isEmpty()) return new ArrayList<>();
-        Session session = getCurrentSession();
-        Query query = session.createQuery("select image from Image image where image.id in (:ids) ");
-        query.setParameterList("ids", ids);
-        return (List<Image>) query.list();
+        String hql = "select image from Image image where image.id in (:ids) ";
+        return findByQueryParams(hql,
+                ImmutableMap.<String, Object>of(
+                        "ids", ids),
+                Image.class);
     }
 
-    @SuppressWarnings("unchecked")
     public List<Image> getImagesByPropertyValue(CvTerm propertyType, String value) throws DaoException {
         try {
-            if (log.isTraceEnabled()) {
-                log.trace("getImagesByPropertyValue(propertyType.name="+propertyType.getName()+", value="+value+")");    
-            }
-            Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select distinct ip.image from ImageProperty ip ");
-            hql.append("join ip.image ");
-            hql.append("where ip.type=:type and ip.value=:value ");
-            Query query = session.createQuery(hql.toString());
-            query.setEntity("type", propertyType);
-            query.setString("value", value);
-            return query.list();
-        } 
-        catch (Exception e) {
+            LOG.trace("getImagesByPropertyValue(propertyType.name=" + propertyType.getName() + ", value=" + value + ")");
+            String hql = "select distinct ip.image from ImageProperty ip join ip.image where ip.type=:type and ip.value=:value ";
+            return findByQueryParams(hql,
+                    ImmutableMap.<String, Object>of(
+                            "type", propertyType,
+                            "value", value),
+                    Image.class);
+        } catch (Exception e) {
             throw new DaoException("Error deleting image property in SAGE", e);
         }
     }
@@ -436,190 +282,132 @@ public class SageDAO {
 
     public void deleteImageProperty(ImageProperty imageProperty) throws DaoException {
         try {
-        	Image image = imageProperty.getImage();
-        	if (image!=null) {
-        		image.getImageProperties().remove(imageProperty);
-        	}
-            getCurrentSession().delete(imageProperty);
-        } 
-        catch (Exception e) {
+            Image image = imageProperty.getImage();
+            if (image!=null) {
+                image.getImageProperties().remove(imageProperty);
+            }
+            delete(imageProperty);
+        } catch (Exception e) {
             throw new DaoException("Error deleting image property in SAGE", e);
         }
     }
     
     public ImageProperty saveImageProperty(ImageProperty imageProperty) throws DaoException {
-    	if (imageProperty.getImage()==null) {
-    		throw new DaoException("Image property is not associated with an image");
-    	}
-    	if (imageProperty.getType()==null) {
-    		throw new DaoException("Image property has no type");
-    	}
-        if (log.isTraceEnabled()) {
-            log.trace("saveImageProperty(image.id="+imageProperty.getImage().getId()+", type.name="+imageProperty.getType().getName()+")");    
+        if (imageProperty.getImage()==null) {
+            throw new DaoException("Image property is not associated with an image");
         }
-        
+        if (imageProperty.getType()==null) {
+            throw new DaoException("Image property has no type");
+        }
+        LOG.trace("saveImageProperty(image.id="+imageProperty.getImage().getId()+", type.name="+imageProperty.getType().getName()+")");
         try {
-            getCurrentSession().saveOrUpdate(imageProperty);
-        } 
-        catch (Exception e) {
+            save(imageProperty);
+        } catch (Exception e) {
             throw new DaoException("Error saving image property in SAGE", e);
         }
         return imageProperty;
     }
 
-	public ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
-		return setImageProperty(image, type, value, new Date());
-	}
-	
-	public ImageProperty setImageProperty(Image image, CvTerm type, String value, Date createDate) throws Exception {
-    	for(ImageProperty property : image.getImageProperties()) {
-    		if (property.getType().equals(type)) {
-    			if (property.getValue().equals(value)) {
-    				// Already at the correct value
-    				return property;
-    			}
-    			else {
-        			// Update existing property value
-        			log.debug("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
-        			property.setValue(value);
-        			return saveImageProperty(property);
-    			}
-    		}
-    	}
-    	// Set new property
+    public ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
+        return setImageProperty(image, type, value, new Date());
+    }
+    
+    public ImageProperty setImageProperty(Image image, CvTerm type, String value, Date createDate) throws Exception {
+        for(ImageProperty property : image.getImageProperties()) {
+            if (property.getType().equals(type)) {
+                if (property.getValue().equals(value)) {
+                    // Already at the correct value
+                    return property;
+                }
+                else {
+                    // Update existing property value
+                    LOG.debug("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
+                    property.setValue(value);
+                    return saveImageProperty(property);
+                }
+            }
+        }
+        // Set new property
         ImageProperty prop = new ImageProperty(type, image, value, createDate);
         image.getImageProperties().add(prop);
         saveImageProperty(prop);
         return prop;
     }
-	
+    
     public Image saveImage(Image image) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("saveImage(image.name="+image.getName()+")");    
-        }
-        
-        try {
-            getCurrentSession().saveOrUpdate(image);
-        } 
-        catch (Exception e) {
-            throw new DaoException("Error saving primary image in SAGE", e);
-        }
+        LOG.trace("saveImage(image.name="+image.getName()+")");
+        save(image);
         return image;
     }
     
     public SecondaryImage saveSecondaryImage(SecondaryImage secondaryImage) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("saveSecondaryImage(secondaryImage.name="+secondaryImage.getName()+")");    
-        }
-        
-        try {
-            getCurrentSession().saveOrUpdate(secondaryImage);
-        } 
-        catch (Exception e) {
-            throw new DaoException("Error saving secondary image in SAGE", e);
-        }
+        LOG.trace("saveSecondaryImage(secondaryImage.name="+secondaryImage.getName()+")");
+        save(secondaryImage);
         return secondaryImage;
     }
 
     public void deleteImage(Image image) throws DaoException {
-        try {
-            // This should cascade and delete all image properties and secondary images
-            getCurrentSession().delete(image);
-        }
-        catch (Exception e) {
-            throw new DaoException("Error deleting image in SAGE", e);
-        }
+        // This should cascade and delete all image properties and secondary images
+        delete(image);
     }
 
     public void deleteSecondaryImage(SecondaryImage secondaryImage) throws DaoException {
-        try {
-            Image image = secondaryImage.getImage();
-            if (image!=null) {
-                image.getSecondaryImages().remove(secondaryImage);
-            }
-            getCurrentSession().delete(secondaryImage);
+        Image image = secondaryImage.getImage();
+        if (image!=null) {
+            image.getSecondaryImages().remove(secondaryImage);
         }
-        catch (Exception e) {
-            throw new DaoException("Error deleting secondary image in SAGE", e);
-        }
+        delete(secondaryImage);
     }
 
     public SageSession getSageSession(String sessionName, CvTerm type, Experiment experiment) {
-        if (log.isTraceEnabled()) {
-            log.trace("getSession(sessionName="+sessionName+")");    
-        }
-        Session session = getCurrentSession();
-        Query query = session.createQuery(
+        LOG.trace("getSession(sessionName="+sessionName+")");
+        String hql =
                 "select session from SageSession session "
                 + "where session.name = :name "
                 + "and session.type = :type "
                 + "and session.experiment = :experiment "
-                + "order by session.id ");
-        query.setString("name", sessionName);
-        query.setEntity("type", type);
-        query.setEntity("experiment", experiment);
-        List<SageSession> sessions = query.list();
-        if (sessions.isEmpty()) return null;
-        return sessions.get(0);
+                + "order by session.id ";
+
+        return findFirst(hql,
+                ImmutableMap.<String, Object>of(
+                        "name", sessionName,
+                        "type", type,
+                        "experiment", experiment),
+                SageSession.class);
     }
     
     public SageSession saveSageSession(SageSession session) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("saveSession(sessionName="+session.getName()+")");    
-        }
-        
+        LOG.trace("saveSession(sessionName="+session.getName()+")");
+
         try {
-            getCurrentSession().saveOrUpdate(session);
-        } 
-        catch (Exception e) {
+            save(session);
+        } catch (Exception e) {
             throw new DaoException("Error saving session in SAGE", e);
         }
         return session;
     }
 
-    public Observation saveObservation(Observation observation) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("saveObservation(observation.type.name="+observation.getType().getName()+")");    
-        }
-        
-        try {
-            getCurrentSession().saveOrUpdate(observation);
-        } 
-        catch (Exception e) {
-            throw new DaoException("Error saving observation in SAGE", e);
-        }
-        return observation;
-    }
-
     public Experiment getExperiment(String experimentName, CvTerm type, String experimenter) {
-        if (log.isTraceEnabled()) {
-            log.trace("getExperiment(experimentName="+experimentName+")");    
-        }
-        
-        Session session = getCurrentSession();
-        Query query = session.createQuery(
+        LOG.trace("getExperiment(experimentName="+experimentName+")");
+        String hql =
                 "select experiment from Experiment experiment "
                 + "where experiment.name = :name "
                 + "and experiment.type = :type "
                 + "and experiment.experimenter = :experimenter "
-                + "order by experiment.id ");
-        query.setString("name", experimentName);
-        query.setEntity("type", type);
-        query.setString("experimenter", experimenter);
-        List<Experiment> experiments = query.list();
-        if (experiments.isEmpty()) return null;
-        return experiments.get(0);
+                + "order by experiment.id ";
+        return findFirst(hql,
+                ImmutableMap.<String, Object>of(
+                        "name", experimentName,
+                        "type", type,
+                        "experimenter", experimenter),
+                Experiment.class);
     }
     
     public Experiment saveExperiment(Experiment experiment) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("saveExperiment(experiment="+experiment.getName()+")");    
-        }
-        
+        LOG.trace("saveExperiment(experiment="+experiment.getName()+")");
         try {
-            getCurrentSession().saveOrUpdate(experiment);
-        } 
-        catch (Exception e) {
+            save(experiment);
+        } catch (Exception e) {
             throw new DaoException("Error saving experiment in SAGE", e);
         }
         return experiment;
@@ -657,14 +445,10 @@ public class SageDAO {
     }
 
     private void fillImageProperties(SlideImage slideImage, Connection conn) throws DaoException {
-        String sql = "select " +
-                "ip.cv, ip.type, ip.value " +
-                "from image_property_vw ip " +
-                "where ip.image_id = ? ";
+        String sql = "select ip.cv, ip.type, ip.value from image_property_vw ip where ip.image_id = ? ";
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getJdbcConnection();
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, slideImage.getSageId());
             rs = pstmt.executeQuery();
@@ -720,23 +504,22 @@ public class SageDAO {
         } catch (SQLException sqle) {
             throw new DaoException(sqle);
         } finally {
-            ResultSetIterator.close(rs, pstmt, null, log);
+            ResultSetIterator.close(rs, pstmt, null);
         }
 
     }
 
     /**
      *
-     * @param  dataSet     image data set for filter.
-     * @param  connection  current database connection.
+     * @param  dataSet    image data set for filter.
+     * @param  conn       current database connection.
      *
      * @return list of defined property types for the specified dataSet
      *
      * @throws SQLException
      *   if list query fails.
      */
-    private List<String> getImagePropertyTypesByDataSet(String dataSet,
-                                                        Connection connection) throws SQLException {
+    private List<String> getImagePropertyTypesByDataSet(String dataSet, Connection conn) throws SQLException {
         List<String> list = new ArrayList<>(256);
 
         final String sql = "select distinct ip1.cv,ip1.type from image_property_vw ip1 " +
@@ -750,7 +533,7 @@ public class SageDAO {
         PreparedStatement pStatement = null;
         ResultSet resultSet = null;
         try {
-            pStatement = connection.prepareStatement(sql);
+            pStatement = conn.prepareStatement(sql);
             pStatement.setString(1, dataSet);
             resultSet = pStatement.executeQuery();
             while (resultSet.next()) {
@@ -758,14 +541,11 @@ public class SageDAO {
                 String term = resultSet.getString(2);
                 list.add(cv+":"+term);
             }
-        } 
-        finally {
-            ResultSetIterator.close(resultSet, pStatement, null, log);
+        } finally {
+            ResultSetIterator.close(resultSet, pStatement, null);
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("getImagePropertyTypesByDataSet: returning " + list);
-        }
+        LOG.debug("getImagePropertyTypesByDataSet: returning {}", list);
 
         return list;
     }
@@ -797,11 +577,11 @@ public class SageDAO {
             }
         } 
         finally {
-            ResultSetIterator.close(resultSet, pStatement, null, log);
+            ResultSetIterator.close(resultSet, pStatement, null);
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("getLinePropertyTypes: returning " + list);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getLinePropertyTypes: returning " + list);
         }
 
         return list;
@@ -821,8 +601,8 @@ public class SageDAO {
         sql.append(buildPropertySql(propertyTypeNames, "ip1"));
         sql.append(IMAGE_PROPERTY_SQL_JOIN);
 
-        if (log.isDebugEnabled()) {
-            log.debug("buildImagePropertySqlForPropertyList: returning \"" + sql + "\"");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("buildImagePropertySqlForPropertyList: returning \"" + sql + "\"");
         }
 
         return sql.toString();
@@ -842,9 +622,7 @@ public class SageDAO {
         
         sql.append(ALL_LINE_PROPERTY_SQL_2);
 
-        if (log.isDebugEnabled()) {
-            log.debug("buildLinePropertySql: returning \"" + sql + "\"");
-        }
+        LOG.debug("buildLinePropertySql: returning \"" + sql + "\"");
 
         return sql.toString();
     }
@@ -874,7 +652,7 @@ public class SageDAO {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getJdbcConnection();
+            conn = dataSource.getConnection();
             pstmt = conn.prepareStatement(sql);
             int fieldIndex = 1;
             for (String paramString: paramStrings) {
@@ -907,7 +685,7 @@ public class SageDAO {
         } catch (SQLException sqle) {
             throw new DaoException(sqle);
         } finally {
-            ResultSetIterator.close(rs, pstmt, conn, log);
+            ResultSetIterator.close(rs, pstmt, conn);
         }
         return slideImage;
     }

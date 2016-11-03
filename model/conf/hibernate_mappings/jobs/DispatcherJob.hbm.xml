@@ -79,7 +79,7 @@
         <property name="dispatchedDate" type="timestamp" column="dispatched_date" not-null="false"/>
     </class>
 
-    <class name="org.janelia.it.jacs.model.jobs.DispatcherJob" table="dispatcher_job_archive"
+    <class name="org.janelia.it.jacs.model.jobs.ArchivedJob" table="dispatcher_job_archive"
            entity-name="archived_dispatcher_job"
            mutable="true"
            dynamic-update="true"

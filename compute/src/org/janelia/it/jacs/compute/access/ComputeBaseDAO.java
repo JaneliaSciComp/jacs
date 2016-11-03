@@ -1,43 +1,23 @@
 package org.janelia.it.jacs.compute.access;
 
 import java.math.BigInteger;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import javax.inject.Inject;
-import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
-import javax.rmi.PortableRemoteObject;
-import javax.sql.DataSource;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 import org.apache.log4j.Logger;
-import org.hibernate.LockMode;
-import org.hibernate.Query;
-import org.hibernate.SQLQuery;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.janelia.it.jacs.compute.service.utility.Resources;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
-import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.model.user_data.Group;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.Subject;
-import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
-import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,7 +25,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * Date: Oct 26, 2007
  * Time: 2:24:24 PM
  */
-public abstract class ComputeBaseDAO {
+public class ComputeBaseDAO extends AbstractBaseDAO {
     
     public static final int STATUS_TYPE = 0;
     private static final int STATUS_DESCRIPTION = 1;
@@ -53,58 +33,9 @@ public abstract class ComputeBaseDAO {
     @Inject
     protected Logger log;
 
-    protected SessionFactory sessionFactory;
-    protected Session externalSession;
+    @PersistenceContext(unitName = "FlyPortal_pu")
+    protected EntityManager entityManager;
 
-    @Inject
-    protected EntityManager workstationEM;
-
-
-    public Connection getJdbcConnection() throws DaoException {
-        String jndiPath = SystemConfigurationProperties.getString("batch.jdbc.jndiName", null);
-        String jdbcDriver = SystemConfigurationProperties.getString("batch.jdbc.driverClassName", null);
-        String jdbcUrl = SystemConfigurationProperties.getString("batch.jdbc.url", null);
-        String jdbcUser = SystemConfigurationProperties.getString("batch.jdbc.username", null);
-        String jdbcPw = SystemConfigurationProperties.getString("batch.jdbc.password", null);
-        try {
-            Connection connection;
-            if (!StringUtils.isEmpty(jndiPath)) {
-                if (log.isTraceEnabled()) {
-                    log.trace("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
-                }
-                Context ctx = new InitialContext();
-                DataSource ds = (DataSource) PortableRemoteObject.narrow(ctx.lookup(jndiPath), DataSource.class);
-                connection = ds.getConnection();
-            }
-            else {
-                if (log.isTraceEnabled()) {
-                    log.trace("getJdbcConnection() using these parameters: driverClassName="+jdbcDriver+" url="+jdbcUrl+" user="+jdbcUser);
-                }
-                Class.forName(jdbcDriver);
-                connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
-            }
-            connection.setAutoCommit(false);
-            return connection;
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    private SessionFactory getSessionFactory() {
-        try {
-            if (sessionFactory==null) {
-//                EntityManager em = Persistence.createEntityManagerFactory("Workstation_pu").createEntityManager();
-                EntityManager em2 = new Resources().workstationEM;
-                Session session = (Session)workstationEM.getDelegate();
-                sessionFactory = session.getSessionFactory();
-            }
-            return sessionFactory;
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public void recordProcessSuccess(String processDefName, Long processId) {
         if (log.isTraceEnabled()) {
@@ -121,231 +52,13 @@ public abstract class ComputeBaseDAO {
         }
     }
 
-    public void updateTaskStatus(long taskId, String status, String comment) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("updateTaskStatus(taskId="+taskId+", status="+status+", comment="+comment+")");    
-        }
-        
-        try {
-            Session session = getCurrentSession();
-            Task task = session.load(Task.class, taskId, LockMode.READ);
-            if (task.isDone() && !Event.ERROR_EVENT.equals(status)) {
-                log.warn("Cannot update task "+task.getObjectId()+" to status \"" + status + "\" as it is already in DONE status.");
-                return;
-            }
-            
-            if (task.getLastEvent().getEventType().equals(status) && task.getLastEvent().getDescription().equals(comment)) {
-                // Compensate for bad error handling in the process framework. Some errors can be logged multiple times,
-                // so this attempts to dedup them so that we keep the database clean.
-                log.debug("Cannot update task "+task.getObjectId()+" to status \"" + status + "\" as it is already in that status with the same message.");
-                return;
-            }
-            
-            if (log.isDebugEnabled()) {
-                log.debug("Retrieved task=" + task.getObjectId().toString() + " from the db.");
-            }
-            Event event = new Event(comment, new Date(), status);
-            task.addEvent(event);
-            if (log.isInfoEnabled()) {
-                log.info("Updating task " + task.getObjectId() + " to status " + status);
-            }
-            session.saveOrUpdate(task);
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    public void saveTaskMessages(long taskId, Set<TaskMessage> messages) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("saveTaskMessages(taskId="+taskId+", messages.size="+messages+")");    
-        }
-        
-        try {
-            Session session = getCurrentSession();
-            Task task = session.load(Task.class, taskId, LockMode.READ);
-            if (log.isDebugEnabled()) {
-                log.debug("Retrieved task=" + task.getObjectId().toString() + " from the db.");
-            }
-            if (log.isInfoEnabled()) {
-                log.info("Updating task " + task.getObjectId() + " with " + messages.size() + " messages");
-            }
-            task.getMessages().addAll(messages);
-            session.saveOrUpdate(task);
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    public Task getTaskById(long taskId) {
-        if (log.isTraceEnabled()) {
-            log.trace("getTaskById(taskId="+taskId+")");    
-        }
-        return getCurrentSession().get(Task.class, taskId);
-    }
-
-    public List<Task> getMostRecentTasksWithName(String owner, String taskName) {
-        if (log.isTraceEnabled()) {
-            log.trace("getMostRecentTasksWithName(owner="+owner+", taskName="+taskName+")");    
-        }
-        
-        String ownerName = DomainUtils.getNameFromSubjectKey(owner);
-        Session session = getCurrentSession();
-        String hql = "select t from Task t " + "where t.owner = :owner " +
-                "and t.taskName = :name " +
-                "order by t.objectId desc";
-        Query query = session.createQuery(hql);
-        query.setString("owner", ownerName);
-        query.setString("name", taskName);
-        return (List<Task>)query.list();
-    }
-
-    public int cancelIncompleteTasksWithName(String owner, String taskName) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getIncompleteTasks(owner="+owner+", taskName="+taskName+")");    
-        }
-        
-        String ownerName = DomainUtils.getNameFromSubjectKey(owner);
-        Session session = getCurrentSession();
-        StringBuilder hql = new StringBuilder("select t from Task t ");
-        hql.append("inner join fetch t.events ");
-        hql.append("where t.owner = :owner ");
-        if (null!=taskName) {hql.append("and t.taskName = :name ");}
-        hql.append("order by t.objectId desc");
-        Query query = session.createQuery(hql.toString());
-        query.setString("owner", ownerName);
-        query.setString("name", taskName);
-        
-        int c = 0;
-        for(Task task : (List<Task>)query.list()) {
-            if (!task.isDone()) {
-                c++;
-                cancelTaskById(task);
-            }
-            for(Task subtask : getChildTasksByParentTaskId(task.getObjectId())) {
-                if (!subtask.isDone()) {
-                    cancelTaskById(task);
-                }
-            }
-        }
-        
-        return c;
-    }
-
-    public int cancelIncompleteTasksForUser(String owner) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("cancelIncompleteTasks(owner="+owner+")");
-        }
-
-        String ownerName = owner.contains(":") ? owner.split(":")[1] : owner;
-        Session session = getCurrentSession();
-        String search = "select task.task_id " + "from task join task_event on task.task_id = task_event.task_id " +
-                "where task.task_owner= :ownerName and event_no in ( " +
-                "select max(event_no) as event_no " +
-                "from task_event task_event1 where  task_event1.task_id=task_event.task_id " +
-                "order by task.task_id asc ) and event_type != 'completed' and task_event.event_type!='error' and task_event.event_type!='canceled'";
-        SQLQuery query = session.createSQLQuery(search);
-        query.setString("ownerName", ownerName);
-
-        int c = 0;
-        for(Object taskId : query.list()) {
-            Task task = getTaskById(((BigInteger)taskId).longValue());
-            if (!task.isDone()) {
-                c++;
-                cancelTaskById(task);
-            }
-//            for(Task subtask : getChildTasksByParentTaskId(task.getObjectId())) {
-//                if (!subtask.isDone()) {
-//                    c++;
-//                    cancelTaskById(task);
-//                }
-//            }
-        }
-
-        return c;
-    }
-
-    public void cancelTaskById(Task task) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("cancelTaskById(task.objectId="+task.getObjectId()+")");    
-        }
-        if (task.getLastEvent()==null || task.getLastEvent().getEventType()==null || !task.getLastEvent().getEventType().equals(Event.CANCELED_EVENT)) {
-            Event event = new Event();
-            event.setEventType(Event.CANCELED_EVENT);
-            event.setTimestamp(new Date());
-            task.addEvent(event);
-            saveOrUpdate(task);
-        }
-    }
-    
     public SearchResultNode getSearchTaskResultNode(long searchTaskId) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("getSearchTaskResultNode(searchTaskId="+searchTaskId+")");    
         }
         
-        SearchTask st = (SearchTask) getCurrentSession().get(Task.class, searchTaskId);
+        SearchTask st = entityManager.find(SearchTask.class, searchTaskId);
         return st.getSearchResultNode();
-    }
-
-    public Task getTaskWithEventsById(long taskId) {
-        if (log.isTraceEnabled()) {
-            log.trace("getTaskWithEventsById(taskId="+taskId+")");    
-        }
-        
-        Task task = null;
-        Query query = getCurrentSession().getNamedQuery("findTaskWithEvents");
-        query.setParameter("taskId", taskId);
-        List list = query.list();
-        if (list.size() > 0) {
-            task = (Task) list.get(0);
-        }
-        return task;
-    }
-
-    public Task getTaskWithMessages(long taskId) {
-        if (log.isTraceEnabled()) {
-            log.trace("getTaskWithMessages(taskId="+taskId+")");    
-        }
-        
-        Task task = null;
-        Query query = getCurrentSession().getNamedQuery("findTaskWithMessages");
-        query.setParameter("taskId", taskId);
-        List list = query.list();
-        if (list.size() > 0) {
-            task = (Task) list.get(0);
-        }
-        return task;
-    }
-
-    public Task getTaskWithMessagesAndParameters(long taskId) {
-        if (log.isTraceEnabled()) {
-            log.trace("getTaskWithMessagesAndParameters(taskId="+taskId+")");    
-        }
-        
-        Task task = null;
-        Query query = getCurrentSession().getNamedQuery("findTaskWithMessagesAndParameters");
-        query.setParameter("taskId", taskId);
-        List list = query.list();
-        if (list.size() > 0) {
-            task = (Task) list.get(0);
-        }
-        return task;
-    }
-
-    public Task getTaskWithResultsById(long taskId) {
-        if (log.isTraceEnabled()) {
-            log.trace("getTaskWithResultsById(taskId="+taskId+")");    
-        }
-        
-        Task task = null;
-        Query query = getCurrentSession().getNamedQuery("findTaskWithResults");
-        query.setParameter("taskId", taskId);
-        List list = query.list();
-        if (list.size() > 0) {
-            task = (Task) list.get(0);
-        }
-        return task;
     }
 
     public Node getNodeById(long nodeId) {
@@ -353,54 +66,9 @@ public abstract class ComputeBaseDAO {
             log.trace("getNodeById(nodeId="+nodeId+")");    
         }
         
-        return getCurrentSession().get(Node.class, nodeId);
+        return entityManager.find(Node.class, nodeId);
     }
 
-    public FileNode getFileNodeByPathOverride(String pathOverride) {
-        if (log.isTraceEnabled()) {
-            log.trace("getFileNodeByPathOverride(pathOverride="+pathOverride+")");    
-        }
-        
-        Session session = getCurrentSession();
-        Query query = session.createQuery("select n from Node n " + "where n.pathOverride = :pathOverride ");
-        query.setString("pathOverride", pathOverride);
-        return (FileNode)query.uniqueResult();
-    }
-    
-    public Node getBlastDatabaseFileNodeByName(String name) {
-        if (log.isTraceEnabled()) {
-            log.trace("getBlastDatabaseFileNodeByName(name="+name+")");    
-        }
-        
-        Query query = getCurrentSession().getNamedQuery("findBlastDatabaseNodeByName"); // Accesion is sic
-        query.setParameter("name", name); // accesion is sic
-        return (Node) query.uniqueResult();
-    }
-
-    public int bulkUpdateNodePathOverridePrefix(String oldPrefix, String newPrefix) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("bulkUpdateNodePathOverridePrefix(oldPrefix="+oldPrefix+", newPrefix="+newPrefix+")");    
-        }
-        
-        try {
-            String hql = "update Node n set n.pathOverride = concat(:newPrefix,substring(n.pathOverride, :prefixOffset)) " +
-                    "where n.pathOverride like :oldPrefix";
-
-            final Session currentSession = getCurrentSession();
-            Query query = currentSession.createQuery(hql);
-            query.setParameter("newPrefix", newPrefix);
-            query.setParameter("prefixOffset", oldPrefix.length()+1);
-            query.setParameter("oldPrefix", oldPrefix+"%");
-            
-            int rows = query.executeUpdate();
-            log.debug("Bulk updated node path override prefix for "+rows+" rows");
-            return rows;
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-    
     /**
      * This method returns the first result node for a given task.
      * ie if you know the task this will return the node result of that task
@@ -413,9 +81,8 @@ public abstract class ComputeBaseDAO {
             log.trace("getResultNodeByTaskId(taskId="+taskId+")");    
         }
         
-        Session session = getCurrentSession();
         Query query = session.createSQLQuery("select node_id from task t, node n where t.task_id=" + taskId + " and t.task_id=n.task_id");
-        List results = query.list();
+        List results = query.getResultList();
         // If no result node exists for the task, return null
         if (null == results || 0 >= results.size()) {
             return null;
@@ -432,17 +99,8 @@ public abstract class ComputeBaseDAO {
             log.trace("getResultNodesByTaskId(taskId="+taskId+")");    
         }
         
-        Session session = getCurrentSession();
-        Query query = session.createSQLQuery("select node_id from task t, node n where t.task_id=" + taskId + " and t.task_id=n.task_id");
-        List results = query.list();
-        Iterator iter = results.iterator();
-        ArrayList<Node> nodeList = new ArrayList<Node>();
-        while (iter.hasNext()) {
-            long nodeId = ((BigInteger) iter.next()).longValue();
-            Node n = getNodeById(nodeId);
-            nodeList.add(n);
-        }
-        return nodeList;
+        TypedQuery<Node> query = entityManager.createQuery("select n from Node where n.task.objectId = :taskId", Node.class);
+        return query.getResultList();
     }
 
     // An array with 2 members is expected back.
@@ -472,8 +130,7 @@ public abstract class ComputeBaseDAO {
                 taskStatusArr[STATUS_DESCRIPTION] = "Task id " + taskId + " was not found in the database.";
             }
             return taskStatusArr;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new DaoException(e);
         }
     }
@@ -498,174 +155,11 @@ public abstract class ComputeBaseDAO {
         }
         
         try {
-            Session session = getCurrentSession();
             Event event = new Event(description, timestamp, eventType);
             task.addEvent(event);
-            session.saveOrUpdate(task);
+            entityManager.persist(event);
             return event;
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    public User getUserByNameOrKey(String nameOrKey) {
-        if (log.isTraceEnabled()) {
-            log.trace("getUserByNameOrKey(nameOrKey="+nameOrKey+")");    
-        }
-        
-        Session session = getCurrentSession();
-        String hql = "select u from User u " + "left outer join fetch u.groupRelationships gr " +
-                "left outer join fetch gr.group " +
-                "where u.name = :name or u.key = :name ";
-        Query query = session.createQuery(hql);
-        query.setString("name", nameOrKey);
-        return (User)query.uniqueResult();
-    }
-    
-    public Group getGroupByNameOrKey(String nameOrKey) {
-        if (log.isTraceEnabled()) {
-            log.trace("getGroupByNameOrKey(nameOrKey="+nameOrKey+")");    
-        }
-        
-        Session session = getCurrentSession();
-        String hql = "select g from Group g " + "left outer join fetch g.userRelationships ur " +
-                "left outer join fetch ur.user " +
-                "where g.name = :name or g.key = :name ";
-        Query query = session.createQuery(hql);
-        query.setString("name", nameOrKey);
-        return (Group)query.uniqueResult();
-    }
-
-    public Subject getSubjectByNameOrKey(String nameOrKey) {
-        if (log.isTraceEnabled()) {
-            log.trace("getSubjectByNameOrKey(nameOrKey="+nameOrKey+")");    
-        }
-        
-        Session session = getCurrentSession();
-        Query query = session.createQuery("select s from Subject s " + "where s.name = :name or s.key = :name ");
-        query.setString("name", nameOrKey);
-        return (Subject)query.uniqueResult();
-    }
-    
-    
-    public List<String> getGroupKeysForUsernameOrSubjectKey(String userKey) {
-        if (log.isTraceEnabled()) {
-            log.trace("getGroupKeysForUsernameOrSubjectKey(userKey="+userKey+")");    
-        }
-
-        String hql = "select g.key from Group g " +
-                "join g.userRelationships ur " +
-                "join ur.user u " +
-                "where u.name = :userKey or u.key = :userKey ";
-        Query query = getCurrentSession().createQuery(hql);
-        query.setString("userKey", userKey);
-        return (List<String>) query.list();
-    }
-
-    public List<String> getSubjectKeys(String subjectKey) {
-        List<String> subjectKeyList = new ArrayList<String>();
-        if (subjectKey == null || "".equals(subjectKey.trim())) return subjectKeyList;
-        subjectKeyList.add(subjectKey);
-        subjectKeyList.addAll(getGroupKeysForUsernameOrSubjectKey(subjectKey));
-        return subjectKeyList;
-    }
-
-    public Set<String> getSubjectKeySet(String subjectKey) {
-        Set<String> subjectKeys = null;
-        if (subjectKey!=null) {
-            subjectKeys = new HashSet<String>(getSubjectKeys(subjectKey));
-        }
-        return subjectKeys;
-    }
-    
-    public Object genericGet(Class c, Long id) {
-        if (log.isTraceEnabled()) {
-            log.trace("genericGet(c="+c+", id="+id+")");    
-        }
-        
-        return getCurrentSession().get(c, id);
-    }
-
-    public Object genericLoad(Class c, Long id) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("genericLoad(c="+c+", id="+id+")");    
-        }
-    
-        try {
-            return getCurrentSession().load(c, id);
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    public void genericSave(Object object) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("genericSave(object="+object+")");    
-        }
-        try {
-            getCurrentSession().saveOrUpdate(object);
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    public void genericDelete(Object object) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("genericDelete(object="+object+")");    
-        }
-        try {
-            getCurrentSession().delete(object);
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    public Object genericCreateAndReturn(Object object) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("genericCreateAndReturn(object="+object+")");    
-        }
-        try {
-            getCurrentSession().save(object);
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
-        return object;
-    }
-
-    public Session getCurrentSession() {
-        if (externalSession == null)
-            return getSessionFactory().getCurrentSession();
-        else
-            return externalSession;
-    }
-
-    protected Session openNewExternalSession() {
-        externalSession = getSessionFactory().openSession();
-        return externalSession;
-    }
-    
-    protected void closeExternalSession() {
-        if (externalSession!=null) externalSession.close();
-        externalSession = null;
-    }
-    
-    public Session getSession() {
-        return getCurrentSession();
-    }
-
-    public void saveOrUpdate(Object item) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("saveOrUpdate(item="+item+")");    
-        }
-        try {
-            getCurrentSession().saveOrUpdate(item);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new DaoException(e);
         }
     }
@@ -700,17 +194,8 @@ public abstract class ComputeBaseDAO {
         if (log.isTraceEnabled()) {
             log.trace("getChildTasksByParentTaskId(taskId="+taskId+")");    
         }
-        
-        Session session = getCurrentSession();
-        Query query = session.createSQLQuery("select t.task_id from task t where t.parent_task_id=" + taskId + " order by t.task_id");
-        List results = query.list();
-        Iterator iter = results.iterator();
-        ArrayList<Task> taskList = new ArrayList<Task>();
-        while (iter.hasNext()) {
-            long childTaskId = ((BigInteger) iter.next()).longValue();
-            Task t = getTaskById(childTaskId);
-            taskList.add(t);
-        }
-        return taskList;
+        TypedQuery<Task> query = entityManager.createQuery("select t from Task t where t.parentTaskId = :taskId order by t.objectId", Task.class);
+        query.setParameter("taskId", taskId);
+        return query.getResultList();
     }
 }

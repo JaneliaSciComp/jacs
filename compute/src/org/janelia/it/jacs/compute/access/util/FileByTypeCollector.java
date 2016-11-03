@@ -19,7 +19,9 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import org.apache.log4j.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Use this to deep-dive a directory structure, looking for files of a given
@@ -28,6 +30,8 @@ import org.apache.log4j.Logger;
  * @author fosterl
  */
 public class FileByTypeCollector extends SimpleFileVisitor<Path> {
+    private static Logger LOG = LoggerFactory.getLogger(ResultSetIterator.class);
+
     private final int maxDescent;
     private final Path basePath;
     private final String fileType;
@@ -35,15 +39,13 @@ public class FileByTypeCollector extends SimpleFileVisitor<Path> {
     private boolean visitationComplete = false;
     
     private final Set<File> files;
-    
-    private final Logger logger = Logger.getLogger(FileByTypeCollector.class);
-    
+
     public FileByTypeCollector(String basePathStr, String fileType, int maxDescent) {
         this.maxDescent = maxDescent;
         this.fileType = fileType;
         this.files = new HashSet<>();
         basePath = Paths.get(basePathStr);
-        logger.info("Examining " + basePath.toString());
+        LOG.info("Examining " + basePath.toString());
     }
     
     /**
@@ -69,7 +71,7 @@ public class FileByTypeCollector extends SimpleFileVisitor<Path> {
      */
     @Override
     public FileVisitResult visitFileFailed(Path file, IOException io) {
-        logger.warn("Error in " + file + " due to " + io);
+        LOG.warn("Error in " + file + " due to " + io);
         return FileVisitResult.SKIP_SUBTREE;
     }
     
@@ -92,9 +94,9 @@ public class FileByTypeCollector extends SimpleFileVisitor<Path> {
             files.add(classicFile);
         }
         else {
-            logger.info("Rejecting " + file.getFileName().toString());
-            logger.info("Reason: endswith? " + file.getFileName().endsWith(fileType));
-            logger.info("Reason: isRegularFile? " + attrs.isRegularFile());
+            LOG.info("Rejecting " + file.getFileName().toString());
+            LOG.info("Reason: endswith? " + file.getFileName().endsWith(fileType));
+            LOG.info("Reason: isRegularFile? " + attrs.isRegularFile());
         }
         return FileVisitResult.CONTINUE;
     }

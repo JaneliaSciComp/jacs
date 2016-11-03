@@ -1,38 +1,26 @@
-
 package org.janelia.it.jacs.compute.access;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
 
-import org.hibernate.HibernateException;
-import org.hibernate.Query;
-import org.hibernate.SQLQuery;
-import org.hibernate.Session;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
-import org.janelia.it.jacs.model.genomics.Read;
 import org.janelia.it.jacs.model.status.GridJobStatus;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.UserToolEvent;
-import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
-import org.janelia.it.jacs.model.user_data.blast.BlastDatasetNode;
-import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
-import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class encapsulates all DB access operations.  It wraps RuntimeExceptions with checked DaoException
@@ -41,268 +29,27 @@ import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
  *
  * @author Sean Murphy
  */
-@Stateless
-public class ComputeDAO extends ComputeBaseDAO {
+public class ComputeDAO extends AbstractBaseDAO {
+    private static Logger LOG = LoggerFactory.getLogger(TaskDAO.class);
 
-    public BlastDatabaseFileNode getBlastDatabaseFileNodeById(Long fileNodeId) {
-        if (log.isTraceEnabled()) {
-            log.trace("getBlastDatabaseFileNodeById(fileNodeId="+fileNodeId+")");    
-        }
-        
-        return getCurrentSession().get(BlastDatabaseFileNode.class, fileNodeId);
+    private TaskDAO taskDao;
+
+    public ComputeDAO(EntityManager entityManager, TaskDAO taskDao) {
+        super(entityManager);
+        this.taskDao = taskDao;
     }
 
-    /**
-     * It expects either a blast file node ID or an aggregate ID and returns an aggregate object.
-     * If the object represented by the ID is a file node the result is encapsulated in an
-     * aggregated node.
-     *
-     * @param nodeId         a BlastDatabaseFileNode or a BlastDatasetNode ID
-     * @param fetchFileNodes - if true it eagerly retrieves all file nodes
-     * @return an aggregated node
-     */
-    public BlastDatasetNode getBlastDatasetNodeById(Long nodeId, boolean fetchFileNodes) {
-        if (log.isTraceEnabled()) {
-            log.trace("getBlastDatasetNodeById(nodeId="+nodeId+", fetchFileNodes="+fetchFileNodes+")");    
-        }
-        
-        Session session = sessionFactory.getCurrentSession();
-        BlastDatasetNode blastDatasetNode = null;
-        try {
-            Node node = session.get(Node.class, nodeId);
-            if (node instanceof BlastDatasetNode) {
-                blastDatasetNode = (BlastDatasetNode) node;
-                if (fetchFileNodes) {
-                    // force a read of the aggregated file nodes
-                    blastDatasetNode.getBlastDatabaseFileNodes().size();
-                }
-            }
-            else if (node instanceof BlastDatabaseFileNode) {
-                BlastDatabaseFileNode blastFileNode = (BlastDatabaseFileNode) node;
-                blastDatasetNode = new BlastDatasetNode(blastFileNode.getOwner(),
-                        blastFileNode.getTask(),
-                        blastFileNode.getName(),
-                        blastFileNode.getDescription(),
-                        blastFileNode.getVisibility(),
-                        null);
-                blastDatasetNode.setObjectId(blastFileNode.getObjectId());
-                blastDatasetNode.setSequenceType(blastFileNode.getSequenceType());
-                blastDatasetNode.addBlastDatabaseFileNode(blastFileNode);
-            }
-        }
-        catch (HibernateException e) {
-            log.error("Error in method getBlastDatasetNodeById:\n" + e.getMessage(), e);
-        }
-        return blastDatasetNode;
-    }
-
-    public Read getReadByBseEntityId(Long bseEntityId) {
-        if (log.isTraceEnabled()) {
-            log.trace("getReadByBseEntityId(bseEntityId="+bseEntityId+")");    
-        }
-        
-        Read r = null;
-        Query query = sessionFactory.getCurrentSession().getNamedQuery("findReadByBseEntityId");
-        query.setParameter("entityId", bseEntityId);
-        List list = query.list();
-        if (list.size() > 0)
-            r = (Read) list.get(0);
-        return r;
-    }
-
-    public BlastResultNode getBlastHitResultDataNodeByTaskId(Long taskId) {
-        if (log.isTraceEnabled()) {
-            log.trace("getBlastHitResultDataNodeByTaskId(taskId="+taskId+")");    
-        }
-        
-        Task task = getTaskById(taskId);
-        if (task == null) {
-            return null;
-        }
-        Query query = getCurrentSession().getNamedQuery("findBlastResultNodeByTaskId"); // Accesion is sic
-        query.setParameter("taskId", taskId); // accesion is sic
-        List nodes = query.list();
-        if (nodes == null || nodes.size() < 1)
-            return null;
-
-        return (BlastResultNode) nodes.iterator().next();
-    }
-
-    public Long getBlastHitCountByTaskId(Long taskId) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getBlastHitCountByTaskId(taskId="+taskId+")");    
-        }
-        
-        return (Long) getCurrentSession()
-                .getNamedQuery("findBlastHitCountByTaskId")
-                .setParameter("taskId", taskId)
-                .uniqueResult();
-    }
-
-    public BlastResultFileNode getBlastResultFileNodeByTaskId(Long taskId) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getBlastResultFileNodeByTaskId(taskId="+taskId+")");    
-        }
-        
-        return (BlastResultFileNode) getCurrentSession()
-                .getNamedQuery("findBlastResultFileNodeByTaskId")
-                .setParameter("taskId", taskId)
-                .uniqueResult();
-    }
-
-    public List<String> getFirstAccesions(int limit) {
-        if (log.isTraceEnabled()) {
-            log.trace("getFirstAccesions(limit="+limit+")");    
-        }
-        
-        Query q = sessionFactory.getCurrentSession().createQuery("select bse.accession from BaseSequenceEntity bse");
-        q.setMaxResults(limit);
-        return q.list();
-    }
-
-    //Example if needed: PreparedStatement ps = session.connection().prepareStatement(new String());
-    public Map<Long, String> getAllTaskPvoStrings() throws Exception {
-        if (log.isTraceEnabled()) {
-            log.trace("getAllTaskPvoStrings()");    
-        }
-        
-        Session session = getCurrentSession();
-        HashMap<Long, String> map = new HashMap<Long, String>();
-        try {
-            Query query = session.getNamedQuery("taskParameterPvoStringQuery");
-            SQLQuery sqlQuery = session.createSQLQuery(query.getQueryString()).setResultSetMapping("taskParameterPvoStringMapping");
-            List results = sqlQuery.list();
-            for (Object result1 : results) {
-                Object[] result = (Object[]) result1;
-                Long taskId = (Long) result[0];
-                String pvoString = (String) result[1];
-                map.put(taskId, pvoString);
-            }
-        }
-        catch (HibernateException e) {
-            log.error("Error in getAllTaskPvoStrings\n" + e.getMessage(), e);
-        }
-        return map;
-    }
-
-    public List<Node> getNodesByClassAndUser(String className, String username) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getNodesByClassAndUser(className="+className+", username="+username+")");    
-        }
-        
-        try {
-            StringBuilder hql = new StringBuilder("select clazz from " + className + " clazz");
-            if (null != username) {
-                hql.append("  where clazz.owner='").append(username).append("'");
-            }
-            if (log.isDebugEnabled()) log.debug("hql=" + hql);
-            Query query = getCurrentSession().createQuery(hql.toString());
-            return query.list();
-        }
-        catch (Exception e) {
-            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            throw handleException(e, "getNodesByClassAndUser");
-        }
-    }
-
-    public List getSampleInfo() throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getSampleInfo()");    
-        }
-        
-        try {
-            String queryString = "select b.sample_acc, b.sample_title, b.sample_name, ss.project, ss.project_name, min(l.min_insert_size ) as min_insert_size, max(l.max_insert_size) as max_insert_size from bio_sample b, sample_site ss, library l where ss.sample_name = b.sample_name and b.sample_acc = l.sample_acc group by b.sample_acc, b.sample_title, b.sample_name, ss.project, ss.project_name order by b.sample_acc";
-            SQLQuery query = getCurrentSession().createSQLQuery(queryString);
-            List returnList = query.list();
-            if (null != returnList && returnList.size() >= 1) {
-                return returnList;
-            }
-        }
-        catch (Exception e) {
-            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            throw handleException(e, "getSampleInfo");
-        }
-        return null;
-    }
-
-
-    public List getHeaderDataForFRV(ArrayList readAccList) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getHeaderDataForFRV(readAccList.size="+readAccList.size()+")");    
-        }
-        
-        try {
-            StringBuilder sql = new StringBuilder("select rmp.accession, rmp.mate_acc, bs.sample_name " +
-                    "from read_mate_pair rmp, bio_sample bs " +
-                    "where rmp.accession in (:readAccList) and rmp.sample_acc=bs.sample_acc");
-            if (log.isDebugEnabled()) log.debug("readAccList length=" + readAccList.size() + "\nsql=" + sql);
-            Query query = getCurrentSession().createSQLQuery(sql.toString());
-            query.setParameterList("readAccList", readAccList);
-            return query.list();
-        }
-        catch (Exception e) {
-            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            throw handleException(e, "getHeaderDataForFVR");
-        }
-    }
-
-    public String getRecruitmentFilterDataTaskForUserByGenbankId(String genbankFileName, String ownerKey) {
-        if (log.isTraceEnabled()) {
-            log.trace("getRecruitmentFilterDataTaskForUserByGenbankId(genbankFileName="+genbankFileName+", ownerKey="+ownerKey+")");    
-        }
-        
-        StringBuilder sql = new StringBuilder("select task_id from task_parameter where task_id in (select task_id from task where task_owner='" + ownerKey + "' and subclass='recruitmentViewerFilterDataTask') and parameter_name='genbankFileName' and parameter_value='" + genbankFileName + "'");
-//        if (_logger.isDebugEnabled()) _logger.debug("Looking for ("+userLogin+","+genbankFileName+")\nsql=" + sql);
-        Query query = getCurrentSession().createSQLQuery(sql.toString());
-        List returnList = query.list();
-        if (null == returnList || returnList.size() <= 0) {
-            return null;
-        }
-        if (1 < returnList.size()) {
-            log.warn("getRecruitmentFilterDataTaskForUserByGenbankId returned " + returnList.size() + " results for this user.  Expecting ONLY one! Returning the first entry...");
-        }
-        BigInteger returnValue = (BigInteger) returnList.get(0);
-        return returnValue.toString();
-    }
-
-    public void addEventToTask(Long taskId, Event event) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("addEventToTask(taskId="+taskId+", event="+event+")");    
-        }
-        
-        // Is the stack trace is thrown into the event description, trunkcate it.  Data should never be put in the event
-        // description.
-        int MAX_MESSAGE_SIZE = 10000;
-        if (event.getDescription().length()> MAX_MESSAGE_SIZE) {
-            event.setDescription(event.getDescription().substring(0, MAX_MESSAGE_SIZE));
-        }
-        Task tmpTask = getTaskById(taskId);
-        tmpTask.addEvent(event);
-        saveOrUpdate(tmpTask);
-    }
-
-    public void setTaskParameter(Long taskId, String parameterKey, String parameterValue) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("setTaskParameter(taskId="+taskId+", parameterKey="+parameterKey+", parameterValue="+parameterValue+")");    
-        }
-        
-        Task tmpTask = getTaskById(taskId);
-        tmpTask.setParameter(parameterKey, parameterValue);
-        saveOrUpdate(tmpTask);
-    }
 
     public void bulkAddGridJobStatus(long taskId, String queue, Set<String> jobIds, GridJobStatus.JobState state) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("bulkAddGridJobStatus(taskId="+taskId+", queue="+queue+", jobIds="+jobIds.size()+", state="+state+")");    
-        }
-        
-        log.debug("bulkAddGridJobStatus - Setting "+jobIds.size()+" jobs to status "+state.name()+" for task "+taskId);
+        LOG.trace("bulkAddGridJobStatus(taskId=" + taskId + ", queue=" + queue + ", jobIds=" + jobIds.size() + ", state=" + state + ")");
+
+        LOG.debug("bulkAddGridJobStatus - Setting " + jobIds.size() + " jobs to status " + state.name() + " for task " + taskId);
         for (String jobId : jobIds) {
             GridJobStatus s = new GridJobStatus(taskId, jobId, queue, state);
             checkAndRecordError(s);
-            saveOrUpdate(s);
+            save(s);
         }
-        log.debug("bulkAddGridJobStatus - completed");
+        LOG.debug("bulkAddGridJobStatus - completed");
     }
 
     /**
@@ -311,46 +58,39 @@ public class ComputeDAO extends ComputeBaseDAO {
      * @throws DaoException thrown when there is a problem recording a task error
      */
     private void checkAndRecordError(GridJobStatus status) throws DaoException {
-        if (null==status) {
-            log.warn("Calling checkandRecordError but grid status object is null");
+        if (null == status) {
+            LOG.warn("Calling checkandRecordError but grid status object is null");
             return;
         }
-        if (log.isTraceEnabled()) {
-            log.trace("checkAndRecordError(status="+status+")");    
-        }
-        
+
         // If an exit code exists and is non-zero record an error.
         if (null!=status.getExitStatus() && 0!=status.getExitStatus()){
-            addEventToTask(status.getTaskID(), new Event("Error - GridJob exit status is "+status.getExitStatus(), new Date(), Event.ERROR_EVENT));
+            taskDao.updateTaskStatus(status.getTaskID(), Event.ERROR_EVENT, "Error - GridJob exit status is "+status.getExitStatus());
         }
     }
 
     public void bulkUpdateGridJobStatus(long taskId, Map<String, GridJobStatus.JobState> jobStates) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("bulkUpdateGridJobStatus(taskId="+taskId+", jobStates.size="+jobStates.size()+")");    
-        }
-        
-        log.debug("Starting db update of task("+taskId+") with "+jobStates.size()+" job items");
+        LOG.trace("bulkUpdateGridJobStatus(taskId="+taskId+", jobStates.size="+jobStates.size()+")");
+
+        LOG.debug("Starting db update of task("+taskId+") with "+jobStates.size()+" job items");
         for (String jobId : jobStates.keySet()) {
             updateJobStatus(taskId, jobId, jobStates.get(jobId));
         }
-        log.debug("Done updating the job status for task "+taskId);
+        LOG.debug("Done updating the job status for task "+taskId);
     }
 
     public void saveOrUpdateGridJobStatus(GridJobStatus gridJobStatus) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("saveOrUpdateGridJobStatus(gridJobStatus="+gridJobStatus+")");    
-        }
-        
-        getCurrentSession().saveOrUpdate(gridJobStatus);
+        LOG.trace("saveOrUpdateGridJobStatus(gridJobStatus="+gridJobStatus+")");
+
+        save(gridJobStatus);
     }
 
     public void cleanUpGridJobStatus(long taskId) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("cleanUpGridJobStatus(taskId="+taskId+")");    
-        }
-        
-        Query query = getCurrentSession().createSQLQuery("update accounting set status = ? where task_id = ? and status not in (?, ?) ");
+        LOG.trace("cleanUpGridJobStatus(taskId="+taskId+")");
+
+        String hql = "update accounting set status = ? where task_id = ? and status not in (?, ?) ";
+
+        Query query = getCurrentSession().createSQLQuery();
         query.setString(0, GridJobStatus.JobState.ERROR.name());
         query.setLong(1, taskId);
         query.setString(2, GridJobStatus.JobState.FAILED.name());

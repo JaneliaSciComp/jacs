@@ -3,7 +3,8 @@ package org.janelia.it.jacs.compute.access.util;
 import java.sql.*;
 import java.util.*;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Iterator-style wrapper for JDBC ResultSets.
@@ -12,7 +13,7 @@ import org.apache.log4j.Logger;
  */
 public class ResultSetIterator implements Iterator<Map<String,Object>> {
 
-    private Logger logger = Logger.getLogger(ResultSetIterator.class);
+    private static Logger LOG = LoggerFactory.getLogger(ResultSetIterator.class);
 
     private final Connection conn;
     private final Statement stmt;
@@ -85,7 +86,7 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
      * Should be called when the client is done with the iterator.
      */
     public void close() {
-        close(rs, stmt, conn, logger);
+        close(rs, stmt, conn);
     }
 
     /**
@@ -95,18 +96,16 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
      * @param  resultSet    result set to close.
      * @param  statement    statement to close.
      * @param  connection   connection to close.
-     * @param  logger       logger for any close exceptions (which do not get thrown).
      */
     public static void close(ResultSet resultSet,
                              Statement statement,
-                             Connection connection,
-                             Logger logger) {
+                             Connection connection) {
 
         if (resultSet != null) {
             try {
                 resultSet.close();
             } catch (SQLException e) {
-                logger.error("failed to close result set", e);
+                LOG.error("failed to close result set", e);
             }
         }
 
@@ -114,7 +113,7 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
             try {
                 statement.close();
             } catch (SQLException e) {
-                logger.error("failed to close statement", e);
+                LOG.error("failed to close statement", e);
             }
         }
 
@@ -122,7 +121,7 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
             try {
                 connection.close();
             } catch (SQLException e) {
-                logger.error("failed to close connection", e);
+                LOG.error("failed to close connection", e);
             }
         }
     }
@@ -130,7 +129,7 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
     private Map<String,Object> toMap(ResultSet rs) throws SQLException {
 
         final int columnCount = orderedColumnLabels.size();
-        Map<String, Object> map = new HashMap<String,Object>(columnCount * 2);
+        Map<String, Object> map = new HashMap<>(columnCount * 2);
 
         Object value;
         for (int i = 0; i < columnCount; i++) {

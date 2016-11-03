@@ -4,7 +4,6 @@ import Jama.Matrix;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -52,7 +51,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     private TmProtobufExchanger protobufExchanger = new TmProtobufExchanger();
     private TmFromEntityPopulator tmFactory = new TmFromEntityPopulator();
 
-    public static final String VERSION_ATTRIBUTE = "Version";
     private final static String WORKSPACES_FOLDER_NAME = "Workspaces";
     private final static String BASE_PATH_PROP = "SWC.Import.BaseDir";
     public static final String OLD_NEURON_STYLES_PREF = "old-annotation-neuron-styles";

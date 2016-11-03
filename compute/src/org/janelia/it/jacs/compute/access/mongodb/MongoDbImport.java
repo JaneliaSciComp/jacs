@@ -614,61 +614,6 @@ public class MongoDbImport extends AnnotationDAO {
     }
 
     // FLY ENTITIES //
-
-    public void loadAllFlyEntities() throws DaoException {
-        log.info("Building disk-based SAGE property map");
-        this.largeOp = new MongoLargeOperations(dao);
-
-        log.info("Building LSM property map");
-        largeOp.buildSageImagePropMap();
-        buildLsmAttributeMap();
-
-        log.info("Loading Fly data into MongoDB");
-        getSession().setFlushMode(FlushMode.MANUAL);
-
-        long startAll = System.currentTimeMillis();
-
-        log.info("Adding subjects");
-        loadSubjects();
-
-        log.info("Adding ontologies");
-        loadOntologies(); // must come before buildAnnotationMap to preload the necessary maps
-
-        log.info("Building disk-based Annotation map");
-        buildAnnotationMap();
-
-        log.info("Adding data sets");
-        loadDataSets();
-
-        log.info("Adding fly lines");
-        loadFlyLines();
-
-        log.info("Adding samples");
-        // TODO: handle deleted (i.e. "hidden") neurons
-        // TODO: handle pattern mask results in samples (knappj)
-        loadSamples();
-
-        log.info("Adding screen samples");
-        loadScreenData();
-
-        log.info("Adding compartment sets");
-        loadCompartmentSets();
-
-        log.info("Adding alignment board contexts");
-        loadAlignmentBoardContexts();
-
-        log.info("Adding alignment boards");
-        loadAlignmentBoards();
-
-        log.info("Adding folders");
-        loadWorkspaces();
-
-        log.info("Verify annotations");
-        verifyAnnotations();
-
-        log.info("Loading Fly data into MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
-    }
-
     Map<String,LsmSageAttribute> lsmSageAttrs = new HashMap<>();
     
     private void buildLsmAttributeMap() {
@@ -700,8 +645,7 @@ public class MongoDbImport extends AnnotationDAO {
         getSession().clear();
         log.trace("Flushing and clearing the session took "+(System.currentTimeMillis()-start)+" ms");
     }
-    
-    
+
     /* SUBJECT */
     
     private void loadSubjects() {
@@ -724,7 +668,7 @@ public class MongoDbImport extends AnnotationDAO {
     }
     
 
-	/* FLY LINES */
+    /* FLY LINES */
     
     private void loadFlyLines() throws DaoException {
         long start = System.currentTimeMillis();

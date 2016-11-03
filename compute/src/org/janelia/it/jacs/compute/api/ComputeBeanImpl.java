@@ -2,10 +2,6 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
-import org.hibernate.Query;
-import org.hibernate.SQLQuery;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.DispatcherDAO;
@@ -25,7 +21,6 @@ import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
-import org.janelia.it.jacs.shared.annotation.metrics_logging.MetricsLoggingConstants;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -36,20 +31,19 @@ import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.inject.Inject;
 import javax.jms.*;
 import javax.jms.Queue;
 import javax.naming.Context;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+import javax.persistence.Query;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.lang.IllegalStateException;
-
-//import java.util.*;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -61,26 +55,19 @@ import java.lang.IllegalStateException;
 @Stateless(name = "ComputeEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-//@Interceptors({UsageInterceptor.class})
-//@PoolClass(value = StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     
     private Logger logger = Logger.getLogger(this.getClass());
     
     public static final String APP_VERSION = "jacs.version";
-    public static final String COMPUTE_EJB_PROP = "ComputeEJB.Name";
-    public static final String MDB_PROVIDER_URL_PROP = "AsyncMessageInterface.ProviderURL";
     public static final String FILE_STORE_CENTRAL_DIR_PROP = "FileStore.CentralDir";
 
-    protected static final String JACS_DATA_DIR =
-        SystemConfigurationProperties.getString("JacsData.Dir.Linux");
-
-    protected static final String JACS_DATA_ARCHIVE_DIR =
-            SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
-
-    private ComputeDAO computeDAO = new ComputeDAO();
-    private SubjectDAO subjectDAO = new SubjectDAO(logger);
-    private DispatcherDAO dispatcherDAO = new DispatcherDAO();
+    @Inject
+    private ComputeDAO computeDAO;
+    @Inject
+    private SubjectDAO subjectDAO;
+    @Inject
+    private DispatcherDAO dispatcherDAO;
 
     @Resource(mappedName = "java:/jboss/exported/queue/MetricsLoggingSingletonMDB")
     private Queue metricsLoggingQueue;
@@ -88,8 +75,6 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     @Resource(mappedName="java:/ConnectionFactory")
     private ConnectionFactory connectionFactory;
     
-    public ComputeBeanImpl() {
-    }
 
     @Override
     public String getAppVersion() {
@@ -635,16 +620,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
 
     @Override
     public void removePreferenceCategory(String categoryName) throws DaoException {
-
-        Session session = null;
-        Transaction tx = null;
-        
         try {
-            session = computeDAO.getCurrentSession();
-            tx = session.beginTransaction();
             // Hard coding SQL is bad, but Hibernate doesn't make it easy to delete from a component map
-    		Query query = session.createSQLQuery("delete from user_preference_map where category='"+categoryName+"'");
-    		int num = query.executeUpdate();
+            Query query = entityManager.createSQLQuery("delete from user_preference_map where category='"+categoryName+"'");
+            int num = query.executeUpdate();
         	logger.info("Deleted "+num+" preferences in category "+categoryName);
         	session.flush();
             tx.commit();
@@ -1002,67 +981,6 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             return false;
         }
         return true;
-    }
-
-    @Override
-    public int moveFileNodesToArchive(String filepath) throws DaoException {
-        try {
-            int nodesUpdated = 0;
-            logger.debug("moveFileNodesToArchive: "+filepath);
-            
-            String parentFileNodePath = null;
-            Long nodeId = null;
-            
-            Pattern p = Pattern.compile("((.*?)/(\\d+)/(\\d+)/(\\d+))(.*?)?");
-            Matcher m = p.matcher(filepath);
-            if (!m.matches()) {
-                
-                p = Pattern.compile("((.*?)/(\\d+))(.*?)?");
-                m = p.matcher(filepath);
-                if (!m.matches()) {
-                    throw new Exception("Could not parse file node information from filepath: "+filepath);
-                }
-                else {
-                    parentFileNodePath = m.group(1);
-                    nodeId = Long.parseLong(m.group(3));   
-                }
-            }
-            else {
-                parentFileNodePath = m.group(1);
-                nodeId = Long.parseLong(m.group(5));   
-            }
-
-            logger.debug("  parentFileNodePath: "+parentFileNodePath);
-            logger.debug("  nodeId: "+nodeId);
-            
-            if (!parentFileNodePath.equals(filepath)) {
-                // Update child node too
-                FileNode childNode = (FileNode)computeDAO.getFileNodeByPathOverride(filepath);
-                if (childNode!=null) {
-                    childNode.setPathOverride(filepath.replaceFirst(JACS_DATA_DIR, JACS_DATA_ARCHIVE_DIR));
-                    computeDAO.saveOrUpdate(childNode);
-                    nodesUpdated++;
-                    logger.debug("  changed path override on child node "+childNode.getObjectId()+" to: "+childNode.getPathOverride());
-                }
-            }
-
-            String archiveParentFileNodePath = parentFileNodePath.replaceFirst(JACS_DATA_DIR, JACS_DATA_ARCHIVE_DIR);
-            
-            FileNode node = (FileNode)computeDAO.getNodeById(nodeId);
-            if (node!=null) {
-                node.setPathOverride(archiveParentFileNodePath);
-                computeDAO.saveOrUpdate(node);
-                nodesUpdated++;
-                logger.debug("  changed path override on node "+node.getObjectId()+" to: "+node.getPathOverride());
-            }
-            
-            nodesUpdated += computeDAO.bulkUpdateNodePathOverridePrefix(parentFileNodePath, archiveParentFileNodePath);
-        
-            return nodesUpdated;
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
-        }
     }
 
     @Override

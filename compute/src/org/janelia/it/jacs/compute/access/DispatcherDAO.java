@@ -1,54 +1,34 @@
 package org.janelia.it.jacs.compute.access;
 
-import org.hibernate.*;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import com.google.common.collect.ImmutableMap;
+import org.janelia.it.jacs.model.jobs.ArchivedJob;
 import org.janelia.it.jacs.model.jobs.DispatcherJob;
-import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
+import javax.annotation.Resource;
 import javax.persistence.EntityManager;
-import javax.persistence.Persistence;
-import javax.rmi.PortableRemoteObject;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class DispatcherDAO {
+public class DispatcherDAO extends AbstractBaseDAO {
 
     private static final Logger LOG = LoggerFactory.getLogger(DispatcherDAO.class);
-    private final String jndiPath = SystemConfigurationProperties.getString("jdbc.jndiName", null);
-    private final String jdbcDriver = SystemConfigurationProperties.getString("jdbc.driverClassName", null);
-    private final String jdbcUrl = SystemConfigurationProperties.getString("jdbc.url", null);
-    private final String jdbcUser = SystemConfigurationProperties.getString("jdbc.username", null);
-    private final String jdbcPw = SystemConfigurationProperties.getString("jdbc.password", null);
 
-    private SessionFactory sessionFactory;
+    @Resource(mappedName = "java://ComputeServer_DataSource")
+    private DataSource dataSource;
+
+    public DispatcherDAO(EntityManager entityManager) {
+        super(entityManager);
+    }
 
     public List<DispatcherJob> nextPendingJobs(String hostName, boolean fetchUnassignedJobsFlag, int maxRetries, int maxLength) {
         List<DispatcherJob> nextJobs = new ArrayList<>();
 
         Connection conn = null;
-//        if (fetchUnassignedJobsFlag) {
-//            String updateQuery = "update dispatcher_job set dispatch_host = ? where dispatch_status = ? and retries < ? and dispatch_host is null limit ?";
-//            try {
-//                conn = getJdbcConnection();
-//                pstmt = conn.prepareStatement(pendingJobsQueryBuffer.toString(),
-//                        ResultSet.TYPE_SCROLL_SENSITIVE,
-//                        ResultSet.CONCUR_UPDATABLE);
-//                pstmt.setString(fieldIndex++, DispatcherJob.Status.PENDING.name());
-//                pstmt.setInt(fieldIndex++, maxRetries);
-//                pstmt.setString(fieldIndex++, hostName);
-//                pstmt.setInt(fieldIndex++, maxLength);
-//                rs = pstmt.executeQuery();
-//
-//            }
-//        }
         StringBuffer pendingJobsQueryBuffer = new StringBuffer();
         pendingJobsQueryBuffer.append("select ")
                 .append("dispatch_id, dispatched_task_id, dispatched_task_owner, process_defn_name, dispatch_status, dispatch_host, retries, dispatched_date, creation_date ")
@@ -65,7 +45,7 @@ public class DispatcherDAO {
         ResultSet rs = null;
         int fieldIndex = 1;
         try {
-            conn = getJdbcConnection();
+            conn = dataSource.getConnection();
             pstmt = conn.prepareStatement(pendingJobsQueryBuffer.toString(),
                     ResultSet.TYPE_SCROLL_SENSITIVE,
                     ResultSet.CONCUR_UPDATABLE);
@@ -114,64 +94,12 @@ public class DispatcherDAO {
         return nextJobs;
     }
 
-    public void save(DispatcherJob dispatcherJob) {
-        getCurrentSession().saveOrUpdate("dispatcher_job", dispatcherJob);
-    }
-
     public void archive(DispatcherJob dispatcherJob) {
-        Session session = getCurrentSession();
-        Transaction tx = session.beginTransaction();
-        try {
-            getCurrentSession().saveOrUpdate("archived_dispatcher_job", dispatcherJob);
-            Query deleteJobQuery = session.createSQLQuery("DELETE FROM dispatcher_job WHERE dispatch_id = :dispatchId ")
-                    .setLong("dispatchId", dispatcherJob.getDispatchId());
-            deleteJobQuery.executeUpdate();
-            tx.commit();
-        } catch (Exception e) {
-            LOG.warn("Error while archiving job {}", dispatcherJob, e);
-            tx.rollback();
-        }
-    }
-
-    private Connection getJdbcConnection() throws DaoException {
-        try {
-            Connection connection = null;
-            if (!StringUtils.isEmpty(jndiPath)) {
-                LOG.debug("getJdbcConnection() using these parameters: jndiPath={}", jndiPath);
-                Context ctx = new InitialContext();
-                DataSource ds = (DataSource) PortableRemoteObject.narrow(ctx.lookup(jndiPath), DataSource.class);
-                connection = ds.getConnection();
-            } else {
-                LOG.debug("getJdbcConnection() using these parameters: driverClassName={} url={} user={}", jdbcDriver, jdbcUrl, jdbcUser);
-                Class.forName(jdbcDriver);
-                connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
-            }
-            connection.setAutoCommit(false);
-            return connection;
-        } catch (Exception e) {
-            throw new DaoException(e);
-        }
-    }
-
-    private SessionFactory getSessionFactory() {
-        try {
-            if (sessionFactory==null) {
-                EntityManager em = Persistence.createEntityManagerFactory("primary").createEntityManager();
-                Session session = (Session)em.getDelegate();
-                sessionFactory = session.getSessionFactory();
-            }
-            return sessionFactory;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private static InitialContext createInitialContext() throws NamingException {
-        return new InitialContext();
-    }
-
-    public Session getCurrentSession() {
-        return getSessionFactory().getCurrentSession();
+        ArchivedJob archivedJob = new ArchivedJob();
+        dispatcherJob.copyTo(archivedJob);
+        save(archivedJob);
+        executeNativeStmt("DELETE FROM dispatcher_job WHERE dispatch_id = :dispatchId",
+                ImmutableMap.<String, Object>of("dispatchId", dispatcherJob.getDispatchId()));
     }
 
 }

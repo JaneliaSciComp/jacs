@@ -38,8 +38,6 @@ import com.google.common.collect.ComparisonChain;
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-//@Interceptors({UsageInterceptor.class})
-//@PoolClass(value = StrictMaxPool.class, maxSize = 500, timeout = 10000)
 public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRemote {
 	
     private static final Logger _logger = Logger.getLogger(AnnotationBeanImpl.class);

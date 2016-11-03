@@ -62,12 +62,6 @@ public class LSMSampleDiscoveryService extends AbstractDomainService {
         for (Long sampleId: sampleIds) {
             sampleIdStrings.add(sampleId.toString());
         }
-
-//        // Process data from all the slide image codes.  Collect affected samples' ids for downstream processing.
-//        Set<String> sampleIds = new LinkedHashSet<>();
-//        prepareSamplesBySlideCode(sampleHelper, dataset, slideImagesGroupedBySlideCode, sampleIds);
-//        sampleHelper.annexSamples();  // Called method is stubbed: here for future ref, if it gets implemented. LLF
-//        return sampleIds;
         return sampleIdStrings;
     }
 

@@ -1,7 +1,8 @@
 package org.janelia.it.jacs.compute.access;
 
-import org.apache.log4j.Logger;
 import org.janelia.it.jacs.shared.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -14,33 +15,32 @@ import java.util.*;
  */
 
 public class PatternSearchDAO {
-    static Logger logger=Logger.getLogger(PatternSearchDAO.class);
-    static int state=PatternAnnotationDataManager.STATE_UNDEFINED;
-    static Map<String, PatternAnnotationDataManager> managerMap=new HashMap<String, PatternAnnotationDataManager>();
+    private static Logger LOG = LoggerFactory.getLogger(PatternSearchDAO.class);
+    static int state = PatternAnnotationDataManager.STATE_UNDEFINED;
+    static Map<String, PatternAnnotationDataManager> managerMap = new HashMap<>();
 
     static {
         try {
             state = PatternAnnotationDataManager.STATE_LOADING;
-            logger.info("Starting RelativePatternAnnotationDataManager load");
+            LOG.info("Setup RelativePatternAnnotationDataManager");
             RelativePatternAnnotationDataManager relativeManager = new RelativePatternAnnotationDataManager();
             relativeManager.setup();
             managerMap.put(relativeManager.getDataManagerType(), relativeManager);
-            logger.info("Starting FuhuiPatternAnnotationDataManager load");
+
+            LOG.info("Setup FuhuiPatternAnnotationDataManager");
             FuhuiPatternAnnotationDataManager fuhuiManager = new FuhuiPatternAnnotationDataManager();
             fuhuiManager.setup();
             managerMap.put(fuhuiManager.getDataManagerType(), fuhuiManager);
             state = PatternAnnotationDataManager.STATE_READY;
-        }
-        catch (Exception ex) {
-            logger.error("PatternSearchDAO: "+ex.getMessage());
-            ex.printStackTrace();
+        } catch (Exception ex) {
+            LOG.error("PatternSearchDAO load exception", ex);
             state = PatternAnnotationDataManager.STATE_ERROR;
         }
     }
 
     public static synchronized List<DataDescriptor> getDataDescriptors(String type) {
-        if (state==PatternAnnotationDataManager.STATE_READY) {
-            PatternAnnotationDataManager manager=managerMap.get(type);
+        if (state == PatternAnnotationDataManager.STATE_READY) {
+            PatternAnnotationDataManager manager = managerMap.get(type);
             return manager.getDataDescriptors();
         } else {
             return null;
@@ -62,13 +62,13 @@ public class PatternSearchDAO {
 
     public static synchronized FilterResult getFilteredResults(String type, Map<String, Set<DataFilter>> filterMap) {
         if (state==PatternAnnotationDataManager.STATE_READY) {
-            List<DataDescriptor> descriptorList=getDataDescriptors(type);
-            PatternAnnotationDataManager manager=managerMap.get(type);
+            List<DataDescriptor> descriptorList = getDataDescriptors(type);
+            PatternAnnotationDataManager manager = managerMap.get(type);
             FilterResult filterResult;
             try {
-                filterResult=manager.getFilteredResults(filterMap);
+                filterResult = manager.getFilteredResults(filterMap);
             } catch (Exception ex) {
-                logger.error(ex.getMessage());
+                LOG.error(ex.getMessage(), ex);
                 return null;
             }
             return filterResult;
