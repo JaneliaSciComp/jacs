@@ -1,8 +1,0 @@
-
-.JobWaitMessageArea      { margin: 40px 0px 100px; 0px; }
-.JobWaitMessage          { font-size: 10pt; text-align: center; font-weight: bold; margin-left: 10px;} /* "Your job has been submitted" message */
-.JobWaitMessageSecondary { font-size:  9pt; text-align: center; font-weight: bold; color: black}
-.JobWaitMessageTertiary  { font-size:  9pt; text-align: center; font-weight: normal; color: #555555; margin-top: 3px; }
-.JobWaitMessageError     { font-size:  9pt; text-align: center; font-weight: bold; color: red}
-.BlastUserSequenceMain   { width: 700px}
-.BlastOptionsColumnSpacer { width: 50px}
